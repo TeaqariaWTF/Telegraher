@@ -4,7 +4,7 @@
     <string name="AppNameBeta">Telegraher DEBUG</string>>
     <string name="LanguageName">English</string>
     <string name="English">Türkçe</string>
-    <string name="LanguageNameInEnglish">English</string>
+    <string name="LanguageNameInEnglish">Türkçe</string>
     <string name="LanguageCode">en</string>
     <string name="ContinueOnThisLanguage">Continue in English</string>
     <!--signin view-->
