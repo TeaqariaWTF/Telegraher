@@ -18,14 +18,13 @@ import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaDataController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.tgnet.TLObject;
@@ -127,7 +126,7 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
 
         nameTextView.setTextSize(18);
         nameTextView.setGravity(Gravity.LEFT);
-        nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         nameTextView.setLeftDrawableTopPadding(-AndroidUtilities.dp(1.3f));
         nameTextView.setScrollNonFitText(true);
         nameTextView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -207,7 +206,7 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
                 updateMediaCount();
             }
 
-        }, SharedMediaLayout.VIEW_TYPE_MEDIA_ACTIVITY) {
+        }, SharedMediaLayout.VIEW_TYPE_MEDIA_ACTIVITY, getResourceProvider()) {
             @Override
             protected void onSelectedTabChanged() {
                 updateMediaCount();

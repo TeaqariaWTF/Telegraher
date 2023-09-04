@@ -13,8 +13,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
-
-import androidx.core.content.FileProvider;
 import android.text.SpannableStringBuilder;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -25,18 +23,10 @@ import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.ApplicationLoader;
+import androidx.core.content.FileProvider;
+
+import org.telegram.messenger.*;
 import org.telegram.messenger.BuildConfig;
-import org.telegram.messenger.FileLoader;
-import org.telegram.messenger.FileLog;
-import org.telegram.messenger.LocaleController;
-import org.telegram.messenger.MessageObject;
-import org.telegram.messenger.NotificationCenter;
-import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
@@ -101,7 +91,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
         titleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         titleTextView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         titleTextView.setText(LocaleController.getString("UpdateTelegram", R.string.UpdateTelegram));
         container.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP));
 
@@ -128,7 +118,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
                 }
                 cellFlickerDrawable.setParentWidth(getMeasuredWidth());
                 AndroidUtilities.rectTmp.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
-                cellFlickerDrawable.draw(canvas, AndroidUtilities.rectTmp, AndroidUtilities.dp(4));
+                cellFlickerDrawable.draw(canvas, AndroidUtilities.rectTmp, AndroidUtilities.dp(4), null);
                 invalidate();
             }
 
@@ -143,7 +133,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
             }
         };
         acceptButton.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
-        acceptButton.setBackgroundDrawable(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+        acceptButton.setBackgroundDrawable(Theme.AdaptiveRipple.filledRect(Theme.key_featuredStickers_addButton, 4));
         acceptButton.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
         addView(acceptButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 46, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 45));
         acceptButton.setOnClickListener(view1 -> {
@@ -162,7 +152,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
 
         acceptTextView = new TextView(context);
         acceptTextView.setGravity(Gravity.CENTER);
-        acceptTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        acceptTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         acceptTextView.setTextColor(0xffffffff);
         acceptTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         acceptButton.addView(acceptTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
@@ -241,7 +231,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
         boolean exists = false;
         try {
             String fileName = FileLoader.getAttachFileName(document);
-            File f = FileLoader.getPathToAttach(document, true);
+            File f = FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(document, true);
             if (exists = f.exists()) {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -337,8 +327,7 @@ public class BlockingUpdateView extends FrameLayout implements NotificationCente
         if (check) {
             TLRPC.TL_help_getAppUpdate req = new TLRPC.TL_help_getAppUpdate();
             try {
-//                req.source = ApplicationLoader.applicationContext.getPackageManager().getInstallerPackageName(ApplicationLoader.applicationContext.getPackageName());
-                req.source = "com.android.vending";
+                req.source = BuildVars.BUILD_VENDOR;
             } catch (Exception ignore) {
 
             }

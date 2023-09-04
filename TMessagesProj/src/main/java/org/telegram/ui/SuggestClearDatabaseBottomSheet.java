@@ -11,15 +11,15 @@ import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.StickerImageView;
 
@@ -53,7 +53,7 @@ public class SuggestClearDatabaseBottomSheet extends BottomSheet {
         title.setGravity(Gravity.START);
         title.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-        title.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        title.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         title.setText(LocaleController.getString("SuggestClearDatabaseTitle", R.string.SuggestClearDatabaseTitle));
         linearLayout.addView(title, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 21, 30, 21, 0));
 
@@ -69,7 +69,7 @@ public class SuggestClearDatabaseBottomSheet extends BottomSheet {
         buttonTextView.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
         buttonTextView.setGravity(Gravity.CENTER);
         buttonTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        buttonTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        buttonTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         buttonTextView.setText(LocaleController.getString("ClearLocalDatabase", R.string.ClearLocalDatabase));
 
         buttonTextView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
@@ -86,8 +86,11 @@ public class SuggestClearDatabaseBottomSheet extends BottomSheet {
                 if (fragment.getParentActivity() == null) {
                     return;
                 }
-                MessagesController.getInstance(currentAccount).clearQueryTime();
-                fragment.getMessagesStorage().clearLocalDatabase();
+                if (MessagesController.getGlobalTelegraherSettings().getBoolean("EnableWALMode", false)) {
+                    MessagesController.getInstance(currentAccount).clearQueryTime();
+                    fragment.getMessagesStorage().clearLocalDatabase();
+                } else
+                    BulletinFactory.of(fragment).createCopyBulletin(LocaleController.getString(R.string.PopupDisabled), fragment.getResourceProvider()).show();
             });
             AlertDialog alertDialog = builder.create();
             fragment.showDialog(alertDialog);

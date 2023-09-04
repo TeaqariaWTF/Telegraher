@@ -6,8 +6,6 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.ui.ActionBar.Theme;

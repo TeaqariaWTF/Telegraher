@@ -11,8 +11,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -44,7 +42,7 @@ public class MemberRequestCell extends FrameLayout {
         nameTextView.setMaxLines(1);
         nameTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         nameTextView.setTextSize(17);
-        nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         addView(nameTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, LocaleController.isRTL ? 12 : 74, 12, LocaleController.isRTL ? 74 : 12, 0));
 
         statusTextView.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
@@ -55,14 +53,14 @@ public class MemberRequestCell extends FrameLayout {
 
         int btnPadding = AndroidUtilities.dp(17);
         TextView addButton = new TextView(getContext());
-        addButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+        addButton.setBackground(Theme.AdaptiveRipple.filledRect(Theme.key_featuredStickers_addButton, 4));
         addButton.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
         addButton.setMaxLines(1);
         addButton.setPadding(btnPadding, 0, btnPadding, 0);
         addButton.setText(isChannel ? LocaleController.getString("AddToChannel", R.string.AddToChannel) : LocaleController.getString("AddToGroup", R.string.AddToGroup));
         addButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
         addButton.setTextSize(14);
-        addButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        addButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         addButton.setOnClickListener(v -> {
             if (clickListener != null && importer != null) {
                 clickListener.onAddClicked(importer);
@@ -79,7 +77,7 @@ public class MemberRequestCell extends FrameLayout {
         dismissButton.setText(LocaleController.getString("Dismiss", R.string.Dismiss));
         dismissButton.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
         dismissButton.setTextSize(14);
-        dismissButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        dismissButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         dismissButton.setOnClickListener(v -> {
             if (clickListener != null && importer != null) {
                 clickListener.onDismissClicked(importer);

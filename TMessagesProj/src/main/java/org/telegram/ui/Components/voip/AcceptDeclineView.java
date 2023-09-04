@@ -30,8 +30,6 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -496,7 +494,7 @@ public class AcceptDeclineView extends View {
         this.screenWasWakeup = screenWasWakeup;
     }
 
-    private static abstract class AcceptDeclineAccessibilityNodeProvider extends AccessibilityNodeProvider {
+    public static abstract class AcceptDeclineAccessibilityNodeProvider extends AccessibilityNodeProvider {
 
         private final View hostView;
         private final int virtualViewsCount;
@@ -505,7 +503,7 @@ public class AcceptDeclineView extends View {
 
         private int currentFocusedVirtualViewId = View.NO_ID;
 
-        private AcceptDeclineAccessibilityNodeProvider(View hostView, int virtualViewsCount) {
+        protected AcceptDeclineAccessibilityNodeProvider(View hostView, int virtualViewsCount) {
             this.hostView = hostView;
             this.virtualViewsCount = virtualViewsCount;
             this.accessibilityManager = ContextCompat.getSystemService(hostView.getContext(), AccessibilityManager.class);

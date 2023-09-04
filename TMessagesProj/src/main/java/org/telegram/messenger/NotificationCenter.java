@@ -59,7 +59,6 @@ public class NotificationCenter {
     public static final int folderBecomeEmpty = totalEvents++;
     public static final int removeAllMessagesFromDialog = totalEvents++;
     public static final int notificationsSettingsUpdated = totalEvents++;
-    public static final int telegraherSettingsUpdated = totalEvents++;
     public static final int blockedUsersDidLoad = totalEvents++;
     public static final int openedChatChanged = totalEvents++;
     public static final int didCreatedNewDeleteTask = totalEvents++;
@@ -125,6 +124,7 @@ public class NotificationCenter {
     public static final int stickersImportComplete = totalEvents++;
     public static final int dialogDeleted = totalEvents++;
     public static final int webViewResultSent = totalEvents++;
+    public static final int voiceTranscriptionUpdate = totalEvents++;
 
     public static final int didGenerateFingerprintKeyPair = totalEvents++;
 
@@ -245,6 +245,16 @@ public class NotificationCenter {
     public static final int onActivityResultReceived = totalEvents++;
     public static final int onRequestPermissionResultReceived = totalEvents++;
     public static final int onUserRingtonesUpdated = totalEvents++;
+    public static final int currentUserPremiumStatusChanged = totalEvents++;
+    public static final int premiumPromoUpdated = totalEvents++;
+    public static final int premiumStatusChangedGlobal = totalEvents++;
+    public static final int currentUserShowLimitReachedDialog = totalEvents++;
+    public static final int billingProductDetailsUpdated = totalEvents++;
+    public static final int premiumStickersPreviewLoaded = totalEvents++;
+
+    public static final int accountLogin = totalEvents++;
+
+    public static final int telegraherSettingsUpdated = totalEvents++;
 
     private SparseArray<ArrayList<NotificationCenterDelegate>> observers = new SparseArray<>();
     private SparseArray<ArrayList<NotificationCenterDelegate>> removeAfterBroadcast = new SparseArray<>();
@@ -283,17 +293,17 @@ public class NotificationCenter {
 
     private int currentAccount;
     private int currentHeavyOperationFlags;
-    private static volatile NotificationCenter[] Instance = new NotificationCenter[UserConfig.MAX_ACCOUNT_COUNT];
     private static volatile NotificationCenter globalInstance;
+    private static SparseArray<NotificationCenter> Instance = new SparseArray<>();
 
     @UiThread
     public static NotificationCenter getInstance(int num) {
-        NotificationCenter localInstance = Instance[num];
+        NotificationCenter localInstance = Instance.get(num);
         if (localInstance == null) {
             synchronized (NotificationCenter.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new NotificationCenter(num);
+                    Instance.put(num, localInstance = new NotificationCenter(num));
                 }
             }
         }

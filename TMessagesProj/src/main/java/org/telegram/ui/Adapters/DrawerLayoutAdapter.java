@@ -13,30 +13,22 @@ import android.content.pm.PackageManager;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.ApplicationLoader;
-import org.telegram.messenger.LocaleController;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.R;
-import org.telegram.messenger.UserConfig;
-import org.telegram.ui.ActionBar.ActionBarLayout;
+import androidx.recyclerview.widget.RecyclerView;
+
+import org.telegram.messenger.*;
 import org.telegram.ui.ActionBar.DrawerLayoutContainer;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Cells.DrawerActionCell;
 import org.telegram.ui.Cells.DividerCell;
+import org.telegram.ui.Cells.DrawerActionCell;
 import org.telegram.ui.Cells.DrawerAddCell;
+import org.telegram.ui.Cells.DrawerProfileCell;
 import org.telegram.ui.Cells.DrawerUserCell;
 import org.telegram.ui.Cells.EmptyCell;
-import org.telegram.ui.Cells.DrawerProfileCell;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SideMenultItemAnimator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import androidx.recyclerview.widget.RecyclerView;
 
 public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
 
@@ -53,7 +45,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
         mContext = context;
         mDrawerLayoutContainer = drawerLayoutContainer;
         itemAnimator = animator;
-        accountsShown = UserConfig.getActivatedAccountsCount() > 1 && MessagesController.getGlobalMainSettings().getBoolean("accountsShown", true);
+        accountsShown = MessagesController.getGlobalMainSettings().getBoolean("accountsShown", true);
         Theme.createCommonDialogResources(context);
         resetItems();
         try {
@@ -64,11 +56,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
     }
 
     private int getAccountRowsCount() {
-        int count = accountNumbers.size() + 1;
-        if (accountNumbers.size() < UserConfig.MAX_ACCOUNT_COUNT) {
-            count++;
-        }
-        return count;
+        return accountNumbers.size() + 2;
     }
 
     @Override
@@ -85,10 +73,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
             return;
         }
         accountsShown = value;
+        MessagesController.getGlobalMainSettings().edit().putBoolean("accountsShown", accountsShown).apply();
         if (profileCell != null) {
             profileCell.setAccountsShown(accountsShown, animated);
         }
-        MessagesController.getGlobalMainSettings().edit().putBoolean("accountsShown", accountsShown).commit();
+        MessagesController.getGlobalMainSettings().edit().putBoolean("accountsShown", accountsShown).apply();
         if (animated) {
             itemAnimator.setShouldClipChildren(false);
             if (accountsShown) {
@@ -183,21 +172,15 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
             if (i < accountNumbers.size()) {
                 return 4;
             } else {
-                if (accountNumbers.size() < UserConfig.MAX_ACCOUNT_COUNT) {
-                    if (i == accountNumbers.size()){
-                        return 5;
-                    } else if (i == accountNumbers.size() + 1) {
-                        return 2;
-                    }
-                } else {
-                    if (i == accountNumbers.size()) {
-                        return 2;
-                    }
+                if (i == accountNumbers.size()) {
+                    return 5;
+                } else if (i == accountNumbers.size() + 1) {
+                    return 2;
                 }
             }
             i -= getAccountRowsCount();
         }
-        if (items.get(i) == null) {
+        if (i < 0 || i >= items.size() || items.get(i) == null) {
             return 2;
         }
         return 3;
@@ -222,7 +205,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
 
     private void resetItems() {
         accountNumbers.clear();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+        for (int a : SharedConfig.activeAccounts) {
             if (UserConfig.getInstance(a).isClientActivated()) {
                 accountNumbers.add(a);
             }
@@ -254,49 +237,49 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter {
         int helpIcon;
         int peopleNearbyIcon;
         if (eventType == 0) {
-            newGroupIcon = R.drawable.menu_groups_ny;
-            //newSecretIcon = R.drawable.menu_secret_ny;
-            newChannelIcon = R.drawable.menu_channel_ny;
-            contactsIcon = R.drawable.menu_contacts_ny;
-            callsIcon = R.drawable.menu_calls_ny;
-            savedIcon = R.drawable.menu_bookmarks_ny;
-            settingsIcon = R.drawable.menu_settings_ny;
-            inviteIcon = R.drawable.menu_invite_ny;
-            helpIcon = R.drawable.menu_help_ny;
-            peopleNearbyIcon = R.drawable.menu_nearby_ny;
+            newGroupIcon = R.drawable.msg_groups_ny;
+            //newSecretIcon = R.drawable.msg_secret_ny;
+            newChannelIcon = R.drawable.msg_channel_ny;
+            contactsIcon = R.drawable.msg_contacts_ny;
+            callsIcon = R.drawable.msg_calls_ny;
+            savedIcon = R.drawable.msg_saved_ny;
+            settingsIcon = R.drawable.msg_settings_ny;
+            inviteIcon = R.drawable.msg_invite_ny;
+            helpIcon = R.drawable.msg_help_ny;
+            peopleNearbyIcon = R.drawable.msg_nearby_ny;
         } else if (eventType == 1) {
-            newGroupIcon = R.drawable.menu_groups_14;
-            //newSecretIcon = R.drawable.menu_secret_14;
-            newChannelIcon = R.drawable.menu_broadcast_14;
-            contactsIcon = R.drawable.menu_contacts_14;
-            callsIcon = R.drawable.menu_calls_14;
-            savedIcon = R.drawable.menu_bookmarks_14;
-            settingsIcon = R.drawable.menu_settings_14;
-            inviteIcon = R.drawable.menu_secret_ny;
-            helpIcon = R.drawable.menu_help;
-            peopleNearbyIcon = R.drawable.menu_secret_14;
+            newGroupIcon = R.drawable.msg_groups_14;
+            //newSecretIcon = R.drawable.msg_secret_14;
+            newChannelIcon = R.drawable.msg_channel_14;
+            contactsIcon = R.drawable.msg_contacts_14;
+            callsIcon = R.drawable.msg_calls_14;
+            savedIcon = R.drawable.msg_saved_14;
+            settingsIcon = R.drawable.msg_settings_14;
+            inviteIcon = R.drawable.msg_secret_ny;
+            helpIcon = R.drawable.msg_help;
+            peopleNearbyIcon = R.drawable.msg_secret_14;
         } else if (eventType == 2) {
-            newGroupIcon = R.drawable.menu_groups_hw;
-            //newSecretIcon = R.drawable.menu_secret_hw;
-            newChannelIcon = R.drawable.menu_broadcast_hw;
-            contactsIcon = R.drawable.menu_contacts_hw;
-            callsIcon = R.drawable.menu_calls_hw;
-            savedIcon = R.drawable.menu_bookmarks_hw;
-            settingsIcon = R.drawable.menu_settings_hw;
-            inviteIcon = R.drawable.menu_invite_hw;
-            helpIcon = R.drawable.menu_help_hw;
-            peopleNearbyIcon = R.drawable.menu_secret_hw;
+            newGroupIcon = R.drawable.msg_groups_hw;
+            //newSecretIcon = R.drawable.msg_secret_hw;
+            newChannelIcon = R.drawable.msg_channel_hw;
+            contactsIcon = R.drawable.msg_contacts_hw;
+            callsIcon = R.drawable.msg_calls_hw;
+            savedIcon = R.drawable.msg_saved_hw;
+            settingsIcon = R.drawable.msg_settings_hw;
+            inviteIcon = R.drawable.msg_invite_hw;
+            helpIcon = R.drawable.msg_help_hw;
+            peopleNearbyIcon = R.drawable.msg_secret_hw;
         } else {
-            newGroupIcon = R.drawable.menu_groups;
-            //newSecretIcon = R.drawable.menu_secret;
-            newChannelIcon = R.drawable.menu_broadcast;
-            contactsIcon = R.drawable.menu_contacts;
-            callsIcon = R.drawable.menu_calls;
-            savedIcon = R.drawable.menu_saved;
-            settingsIcon = R.drawable.menu_settings;
-            inviteIcon = R.drawable.menu_invite;
-            helpIcon = R.drawable.menu_help;
-            peopleNearbyIcon = R.drawable.menu_nearby;
+            newGroupIcon = R.drawable.msg_groups;
+            //newSecretIcon = R.drawable.msg_secret;
+            newChannelIcon = R.drawable.msg_channel;
+            contactsIcon = R.drawable.msg_contacts;
+            callsIcon = R.drawable.msg_calls;
+            savedIcon = R.drawable.msg_saved;
+            settingsIcon = R.drawable.msg_settings_old;
+            inviteIcon = R.drawable.msg_invite;
+            helpIcon = R.drawable.msg_help;
+            peopleNearbyIcon = R.drawable.msg_nearby;
         }
         items.add(new Item(2, LocaleController.getString("NewGroup", R.string.NewGroup), newGroupIcon));
         //items.add(new Item(3, LocaleController.getString("NewSecretChat", R.string.NewSecretChat), newSecretIcon));

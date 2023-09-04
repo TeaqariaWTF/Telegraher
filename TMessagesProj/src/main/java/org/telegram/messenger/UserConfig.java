@@ -8,30 +8,20 @@
 
 package org.telegram.messenger;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.SystemClock;
 import android.util.Base64;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import android.util.SparseArray;
 
 import org.telegram.tgnet.SerializedData;
 import org.telegram.tgnet.TLRPC;
 
-import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class UserConfig extends BaseController {
 
     public static int selectedAccount;
-    public final static int MAX_ACCOUNT_COUNT = 80;
-    public final static int ACC_TO_INIT = 3;
-    public final static boolean TDBG = false;
 
     private final Object sync = new Object();
     private boolean configLoaded;
@@ -74,157 +64,15 @@ public class UserConfig extends BaseController {
     public volatile byte[] savedSaltedPassword;
     public volatile long savedPasswordTime;
 
-    private static SharedPreferences telegraherSettings;
-    private static HashSet<Integer> hsAccs;
-    private static boolean hsAccsInit=false;
-    private static boolean hsAccsSaved=false;
-    private static HashMap<Integer, String[]> hmDevices;
+    private static SparseArray<UserConfig> Instance = new SparseArray<>();
 
-    synchronized public static void initHsAccs() {
-        if (hsAccsInit) return;
-        hsAccsInit = true;
-        telegraherSettings = ApplicationLoader.applicationContext.getSharedPreferences("TelegraherSettings", Activity.MODE_PRIVATE);
-        if (TDBG && telegraherSettings != null) System.out.printf("HEY UserConfig telegraherSettings%n%s%n", new Gson().toJson(telegraherSettings.getAll()));
-        if (TDBG) System.out.printf("HEY initHsAccs telegraherSettings is null %b%n", telegraherSettings == null);
-        Type lhs = new TypeToken<HashSet<Integer>>() {}.getType();
-        if (isTh("EnableAccountExtendVanilla")) {
-            hsAccs = new Gson().fromJson(telegraherSettings.getString("accountsHS", "[0,1,2]"), lhs);
-        } else
-            hsAccs = new Gson().fromJson("[0,1,2]", lhs);
-        initHmDevices();
-    }
-
-    synchronized public static void initHmDevices() {
-        if (!hsAccsInit) return;
-        Type lhm = new TypeToken<HashMap<Integer, String[]>>() {}.getType();
-        if (telegraherSettings != null) hmDevices = new Gson().fromJson(telegraherSettings.getString("devicesHM", null), lhm);
-        if (TDBG) System.out.printf("HEY initHmDevices hmDevices is null %b%n", hmDevices == null);
-        if (hmDevices == null) resetHmDevices();
-    }
-
-    synchronized public static void resetHmDevices() {
-        String deviceBrand = Build.MANUFACTURER;
-        String deviceModel = Build.MODEL;
-        String deviceOS = Integer.valueOf(Build.VERSION.SDK_INT).toString();
-        if (hmDevices == null) hmDevices = new HashMap<>();
-        hmDevices.put(-1, new String[]{deviceBrand, deviceModel, deviceOS});
-    }
-
-    synchronized public static void cloneHmDevice(int i) {
-        cloneHmDevice(i, true);
-    }
-
-    synchronized public static void cloneHmDevice(int i, boolean save) {
-        if (!UserConfig.getInstance(i).isClientActivated())
-            hmDevices.put(i, Arrays.copyOf(hmDevices.get(-1), 3));
-        else
-            hmDevices.put(i, new String[]{Build.MANUFACTURER, Build.MODEL, Integer.valueOf(Build.VERSION.SDK_INT).toString()});
-        if (save)
-            MessagesController.getGlobalTelegraherSettings().edit().putString("devicesHM", new Gson().toJson(hmDevices)).commit();
-    }
-
-    public static String hmGetBrand(int i) {
-        return hmGetI(i, 0);
-    }
-
-    public static String hmGetModel(int i) {
-        return hmGetI(i, 1);
-    }
-
-    public static String hmGetOS(int i) {
-        return hmGetI(i, 2);
-    }
-
-    public static String hmGetI(int i, int j) {
-        initHsAccs();
-        if (TDBG) System.out.printf("HEY hmGetI[%d][%d] telegraherSettings is null %b%n", i, j, telegraherSettings == null);
-        if (!hmDevices.containsKey(i)) {
-            cloneHmDevice(i);
-            if (TDBG) System.out.printf("HEY hmGetI[%d][%d] cloneHmDevices %n%s%n", i, j, new Gson().toJson(hmDevices));
-        }
-        return hmDevices.get(i)[j];
-    }
-
-    synchronized public static void hmSetI(int j, String v) {
-        hmSetI(-1, j, v);
-    }
-
-    synchronized public static void hmSetI(int i, int j, String v) {
-        initHsAccs();
-        if (TDBG) System.out.printf("HEY hmSetI[%d][%d] telegraherSettings is null %b%n", i, j, telegraherSettings == null);
-        if (!hmDevices.containsKey(i)) {
-            cloneHmDevice(i);
-            if (TDBG) System.out.printf("HEY hmSetI[%d][%d] cloneHmDevices %n%s%n", i, j, new Gson().toJson(hmDevices));
-        }
-        String[] arr = Arrays.copyOf(hmDevices.get(i), 3);
-        arr[j] = v;
-        hmDevices.put(i, arr);
-    }
-
-    synchronized public static void syncHmDevices() {
-        for (int i = 0; i < hsAccs.size(); i++)
-            if (!UserConfig.getInstance(i).isClientActivated()) cloneHmDevice(i, false);
-        saveHmDevices();
-    }
-
-    synchronized public static void saveHmDevices() {
-        MessagesController.getGlobalTelegraherSettings().edit().putString("devicesHM", new Gson().toJson(hmDevices)).commit();
-    }
-
-    public static boolean isTh(String key) {
-        return isTh(key, false);
-    }
-
-    public static boolean isTh(String key, boolean def) {
-        initHsAccs();
-        if (TDBG) System.out.printf("HEY isTh telegraherSettings is null %b%n", telegraherSettings == null);
-        if (telegraherSettings == null) return false;
-        return telegraherSettings.getBoolean(key, def);
-    }
-
-    public static HashSet<Integer> getHsAccs() {
-        initHsAccs();
-        return hsAccs;
-    }
-
-    synchronized public static void addToHsAccs(int a) {
-        initHsAccs();
-        hsAccs.add(a);
-    }
-
-    public static boolean existsInHsAccs(int a) {
-        initHsAccs();
-        return hsAccs.contains(a);
-    }
-
-    public static int nextHsAccId() {
-        initHsAccs();
-        if (hsAccs.size() < MAX_ACCOUNT_COUNT && isTh("EnableAccountExtendVanilla")) return hsAccs.size();
-        return hsAccs.size() - 1;
-    }
-
-    synchronized public static boolean saveHsAccs() {
-        initHsAccs();
-        if (hsAccsSaved) return false;
-        if (TDBG) System.out.printf("HEY saveHsAccs%n");
-        syncHmDevices();
-        MessagesController.getGlobalTelegraherSettings().edit()
-                .putString("accountsHS", new Gson().toJson(hsAccs))
-                .putString("devicesHM", new Gson().toJson(hmDevices))
-                .commit();
-        hsAccsSaved = true;
-        MessagesController.refreshGlobalTelegraherSettings();
-        return true;
-    }
-
-    private static volatile UserConfig[] Instance = new UserConfig[UserConfig.MAX_ACCOUNT_COUNT];
     public static UserConfig getInstance(int num) {
-        UserConfig localInstance = Instance[num];
+        UserConfig localInstance = Instance.get(num);
         if (localInstance == null) {
             synchronized (UserConfig.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new UserConfig(num);
+                    Instance.put(num, localInstance = new UserConfig(num));
                 }
             }
         }
@@ -233,8 +81,8 @@ public class UserConfig extends BaseController {
 
     public static int getActivatedAccountsCount() {
         int count = 0;
-        for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
-            if (AccountInstance.getInstance(a).getUserConfig().isClientActivated()) {
+        for (int a : SharedConfig.activeAccounts) {
+            if (getInstance(a).isClientActivated()) {
                 count++;
             }
         }
@@ -243,6 +91,19 @@ public class UserConfig extends BaseController {
 
     public UserConfig(int instance) {
         super(instance);
+    }
+
+    public static boolean hasPremiumOnAccounts() {
+        for (int a : SharedConfig.activeAccounts)  {
+            if (AccountInstance.getInstance(a).getUserConfig().isClientActivated() && AccountInstance.getInstance(a).getUserConfig().getUserConfig().isPremium()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static int getMaxAccountCount() {
+        return hasPremiumOnAccounts() ? 5 : 3;
     }
 
     public int getNewMessageId() {
@@ -283,6 +144,9 @@ public class UserConfig extends BaseController {
                     editor.putBoolean("hasValidDialogLoadIds", hasValidDialogLoadIds);
                     editor.putInt("sharingMyLocationUntil", sharingMyLocationUntil);
                     editor.putInt("lastMyLocationShareTime", lastMyLocationShareTime);
+//                    editor.putString("dsBrand", "Nokia");
+//                    editor.putString("dsModel", "3310");
+
                     editor.putBoolean("filtersLoaded", filtersLoaded);
 
                     editor.putInt("6migrateOffsetId", migrateOffsetId);
@@ -331,7 +195,7 @@ public class UserConfig extends BaseController {
                         editor.remove("user");
                     }
 
-                    editor.commit();
+                    editor.apply();
                 } catch (Exception e) {
                     FileLog.e(e);
                 }
@@ -340,7 +204,7 @@ public class UserConfig extends BaseController {
     }
 
     public static boolean isValidAccount(int num) {
-         return num >= 0 && num < UserConfig.MAX_ACCOUNT_COUNT && getInstance(num).isClientActivated();
+        return num >= 0 && SharedConfig.activeAccounts.contains(num) && getInstance(num).isClientActivated();
     }
 
     public boolean isClientActivated() {
@@ -369,8 +233,22 @@ public class UserConfig extends BaseController {
 
     public void setCurrentUser(TLRPC.User user) {
         synchronized (sync) {
+            TLRPC.User oldUser = currentUser;
             currentUser = user;
             clientUserId = user.id;
+            checkPremium(oldUser, user);
+        }
+    }
+
+    private void checkPremium(TLRPC.User oldUser, TLRPC.User newUser) {
+        if (oldUser == null || (newUser != null && oldUser.premium != newUser.premium)) {
+            AndroidUtilities.runOnUIThread(() -> {
+                getMessagesController().updatePremium(newUser.premium);
+                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.currentUserPremiumStatusChanged);
+                NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.premiumStatusChangedGlobal);
+
+                getMediaDataController().loadPremiumPromo(false);
+            });
         }
     }
 
@@ -449,6 +327,7 @@ public class UserConfig extends BaseController {
                 }
             }
             if (currentUser != null) {
+                checkPremium(null, currentUser);
                 clientUserId = currentUser.id;
             }
             configLoaded = true;
@@ -527,7 +406,7 @@ public class UserConfig extends BaseController {
         lastHintsSyncTime = (int) (System.currentTimeMillis() / 1000) - 25 * 60 * 60;
         resetSavedPassword();
         boolean hasActivated = false;
-        for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
+        for (int a : SharedConfig.activeAccounts) {
             if (AccountInstance.getInstance(a).getUserConfig().isClientActivated()) {
                 hasActivated = true;
                 break;
@@ -544,7 +423,7 @@ public class UserConfig extends BaseController {
     }
 
     public void setPinnedDialogsLoaded(int folderId, boolean loaded) {
-        getPreferences().edit().putBoolean("2pinnedDialogsLoaded" + folderId, loaded).commit();
+        getPreferences().edit().putBoolean("2pinnedDialogsLoaded" + folderId, loaded).apply();
     }
 
     public static final int i_dialogsLoadOffsetId = 0;
@@ -559,7 +438,7 @@ public class UserConfig extends BaseController {
     }
 
     public void setTotalDialogsCount(int folderId, int totalDialogsLoadCount) {
-        getPreferences().edit().putInt("2totalDialogsLoadCount" + (folderId == 0 ? "" : folderId), totalDialogsLoadCount).commit();
+        getPreferences().edit().putInt("2totalDialogsLoadCount" + (folderId == 0 ? "" : folderId), totalDialogsLoadCount).apply();
     }
 
     public long[] getDialogLoadOffsets(int folderId) {
@@ -582,6 +461,13 @@ public class UserConfig extends BaseController {
         editor.putLong("2dialogsLoadOffsetChannelId" + (folderId == 0 ? "" : folderId), dialogsLoadOffsetChannelId);
         editor.putLong("2dialogsLoadOffsetAccess" + (folderId == 0 ? "" : folderId), dialogsLoadOffsetAccess);
         editor.putBoolean("hasValidDialogLoadIds", true);
-        editor.commit();
+        editor.apply();
+    }
+
+    public boolean isPremium() {
+        if (currentUser == null) {
+            return false;
+        }
+        return currentUser.premium;
     }
 }

@@ -13,10 +13,9 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
+import android.util.Log;
 import android.view.animation.DecelerateInterpolator;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 
@@ -100,7 +99,7 @@ public class MediaActionDrawable extends Drawable {
 
         paint3.setColor(0xffffffff);
 
-        textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textPaint.setTextSize(AndroidUtilities.dp(13));
         textPaint.setColor(0xffffffff);
 

@@ -20,8 +20,6 @@ import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
@@ -318,7 +316,7 @@ public class AudioPlayerCell extends View implements DownloadController.FileDown
             }
         }
         if (cacheFile == null) {
-            cacheFile = FileLoader.getPathToAttach(currentMessageObject.getDocument());
+            cacheFile = FileLoader.getInstance(currentAccount).getPathToAttach(currentMessageObject.getDocument());
         }
         if (TextUtils.isEmpty(fileName)) {
             return;

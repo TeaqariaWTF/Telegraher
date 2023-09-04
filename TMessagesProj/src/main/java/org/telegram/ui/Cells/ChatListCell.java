@@ -7,12 +7,11 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.text.TextPaint;
 import android.view.Gravity;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -98,6 +97,7 @@ public class ChatListCell extends LinearLayout {
             info.setClassName(RadioButton.class.getName());
             info.setChecked(button.isChecked());
             info.setCheckable(true);
+            info.setContentDescription(isThreeLines ? LocaleController.getString("ChatListExpanded", R.string.ChatListExpanded) : LocaleController.getString("ChatListDefault", R.string.ChatListDefault));
         }
     }
 

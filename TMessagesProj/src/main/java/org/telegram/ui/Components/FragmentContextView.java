@@ -51,8 +51,6 @@ import androidx.annotation.IntDef;
 import androidx.annotation.Keep;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
@@ -61,9 +59,11 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.LocationController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.voip.VoIPService;
@@ -265,8 +265,8 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
 
             @Override
-            protected void onDraw(Canvas canvas) {
-                super.onDraw(canvas);
+            protected void dispatchDraw(Canvas canvas) {
+                super.dispatchDraw(canvas);
                 if (currentStyle == STYLE_INACTIVE_GROUP_CALL && timeLayout != null) {
                     int width = (int) Math.ceil(timeLayout.getLineWidth(0)) + AndroidUtilities.dp(24);
                     if (width != gradientWidth) {
@@ -291,12 +291,12 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                     matrix.postTranslate(-gradientWidth * 0.7f * moveProgress, 0);
                     linearGradient.setLocalMatrix(matrix);
                     int x = getMeasuredWidth() - width - AndroidUtilities.dp(10);
-                    int y = AndroidUtilities.dp(12);
-                    rect.set(0, 0, width, AndroidUtilities.dp(24));
+                    int y = AndroidUtilities.dp(10);
+                    rect.set(0, 0, width, AndroidUtilities.dp(28));
                     canvas.save();
                     canvas.translate(x, y);
-                    canvas.drawRoundRect(rect, AndroidUtilities.dp(12), AndroidUtilities.dp(12), gradientPaint);
-                    canvas.translate(AndroidUtilities.dp(12), AndroidUtilities.dp(4));
+                    canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), gradientPaint);
+                    canvas.translate(AndroidUtilities.dp(12), AndroidUtilities.dp(6));
                     timeLayout.draw(canvas);
                     canvas.restore();
                 }
@@ -353,12 +353,12 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 } else if (currentStyle == STYLE_INACTIVE_GROUP_CALL) {
                     textView.setGravity(Gravity.TOP | Gravity.LEFT);
                     textView.setTextColor(getThemedColor(Theme.key_inappPlayerPerformer));
-                    textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
                 } else if (currentStyle == STYLE_CONNECTING_GROUP_CALL || currentStyle == STYLE_ACTIVE_GROUP_CALL) {
                     textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
                     textView.setTextColor(getThemedColor(Theme.key_returnToCallText));
-                    textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 }
                 return textView;
@@ -392,7 +392,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
 
                 final int halfOutlineWidth = AndroidUtilities.dp(1);
                 AndroidUtilities.rectTmp.set(halfOutlineWidth, halfOutlineWidth, getWidth() - halfOutlineWidth, getHeight() - halfOutlineWidth);
-                joinButtonFlicker.draw(canvas, AndroidUtilities.rectTmp, AndroidUtilities.dp(16));
+                joinButtonFlicker.draw(canvas, AndroidUtilities.rectTmp, AndroidUtilities.dp(16), this);
                 if (joinButtonFlicker.getProgress() < 1f && !joinButtonFlicker.repeatEnabled) {
                     invalidate();
                 }
@@ -409,7 +409,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
         joinButton.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
         joinButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(16), getThemedColor(Theme.key_featuredStickers_addButton), getThemedColor(Theme.key_featuredStickers_addButtonPressed)));
         joinButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        joinButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        joinButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         joinButton.setGravity(Gravity.CENTER);
         joinButton.setPadding(AndroidUtilities.dp(14), 0, AndroidUtilities.dp(14), 0);
         addView(joinButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 28, Gravity.TOP | Gravity.RIGHT, 0, 10, 14, 0));
@@ -624,9 +624,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 }
                 builder.setPositiveButton(LocaleController.getString("Stop", R.string.Stop), (dialogInterface, i) -> {
                     if (fragment instanceof DialogsActivity) {
-                        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                            if (!UserConfig.existsInHsAccs(a)) continue;
-                            if (UserConfig.TDBG) System.out.printf("HEY FragmentContextView FragmentContextView 1 [%d]%n", a);
+                        for (int a : SharedConfig.activeAccounts) {
                             LocationController.getInstance(a).removeAllLocationSharings();
                         }
                     } else {
@@ -685,9 +683,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                     did = ((ChatActivity) fragment).getDialogId();
                     account = fragment.getCurrentAccount();
                 } else if (LocationController.getLocationsCount() == 1) {
-                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                        if (!UserConfig.existsInHsAccs(a)) continue;
-                        if (UserConfig.TDBG) System.out.printf("HEY FragmentContextView FragmentContextView 2 [%d]%n", a);
+                    for (int a : SharedConfig.activeAccounts) {
                         ArrayList<LocationController.SharingLocationInfo> arrayList = LocationController.getInstance(a).sharingLocationsUI;
                         if (!arrayList.isEmpty()) {
                             LocationController.SharingLocationInfo info = LocationController.getInstance(a).sharingLocationsUI.get(0);
@@ -955,7 +951,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 }
                 textView.setGravity(Gravity.TOP | Gravity.LEFT);
                 textView.setTextColor(getThemedColor(Theme.key_inappPlayerPerformer));
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
             }
             titleTextView.setTag(Theme.key_inappPlayerPerformer);
@@ -1019,7 +1015,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 }
                 textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
                 textView.setTextColor(getThemedColor(Theme.key_returnToCallText));
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
             }
 
@@ -1055,9 +1051,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.liveLocationsChanged);
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.liveLocationsCacheChanged);
         } else {
-            for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                if (!UserConfig.existsInHsAccs(a)) continue;
-                if (UserConfig.TDBG) System.out.printf("HEY FragmentContextView onDetachedFromWindow [%d]%n", a);
+            for (int a : SharedConfig.activeAccounts) {
                 NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingDidReset);
                 NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
                 NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingDidStart);
@@ -1093,9 +1087,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             }
             checkLiveLocation(true);
         } else {
-            for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                if (!UserConfig.existsInHsAccs(a)) continue;
-                if (UserConfig.TDBG) System.out.printf("HEY FragmentContextView onAttachedToWindow [%d]%n", a);
+            for (int a : SharedConfig.activeAccounts) {
                 NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingDidReset);
                 NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
                 NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingDidStart);
@@ -1328,9 +1320,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 String param;
                 String str;
                 ArrayList<LocationController.SharingLocationInfo> infos = new ArrayList<>();
-                for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                    if (!UserConfig.existsInHsAccs(a)) continue;
-                    if (UserConfig.TDBG) System.out.printf("HEY FragmentContextView checkLiveLocation [%d]%n", a);
+                for (int a : SharedConfig.activeAccounts) {
                     infos.addAll(LocationController.getInstance(a).sharingLocationsUI);
                 }
                 if (infos.size() == 1) {
@@ -1364,7 +1354,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                     textView.setEllipsize(TextUtils.TruncateAt.END);
                 }
 
-                TypefaceSpan span = new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")), 0, getThemedColor(Theme.key_inappPlayerPerformer));
+                TypefaceSpan span = new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf"), 0, getThemedColor(Theme.key_inappPlayerPerformer));
                 stringBuilder.setSpan(span, start, start + liveLocation.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                 titleTextView.setText(stringBuilder, false);
             } else {
@@ -1449,7 +1439,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             textView.setEllipsize(TextUtils.TruncateAt.END);
         }
         if (start >= 0) {
-            TypefaceSpan span = new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")), 0, getThemedColor(Theme.key_inappPlayerPerformer));
+            TypefaceSpan span = new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf"), 0, getThemedColor(Theme.key_inappPlayerPerformer));
             stringBuilder.setSpan(span, start, start + liveLocation.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
         titleTextView.setText(stringBuilder, false);
@@ -1641,7 +1631,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                         textView.setEllipsize(TextUtils.TruncateAt.END);
                     }
                 }
-                TypefaceSpan span = new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")), 0, getThemedColor(Theme.key_inappPlayerPerformer));
+                TypefaceSpan span = new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf"), 0, getThemedColor(Theme.key_inappPlayerPerformer));
                 stringBuilder.setSpan(span, 0, messageObject.getMusicAuthor().length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                 titleTextView.setText(stringBuilder, !create && wasVisible && isMusic);
             }
@@ -1911,7 +1901,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                         gradientTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
                         gradientTextPaint.setColor(0xffffffff);
                         gradientTextPaint.setTextSize(AndroidUtilities.dp(14));
-                        gradientTextPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        gradientTextPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
 
                         gradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                         gradientPaint.setColor(0xffffffff);
@@ -2116,7 +2106,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
             return;
         }
         boolean clipped = false;
-        if ((currentStyle == STYLE_ACTIVE_GROUP_CALL || currentStyle == STYLE_CONNECTING_GROUP_CALL) && drawOverlay) {
+        if (currentStyle == STYLE_ACTIVE_GROUP_CALL || currentStyle == STYLE_CONNECTING_GROUP_CALL) {
             boolean mutedByAdmin = GroupCallActivity.groupCallInstance == null && Theme.getFragmentContextViewWavesDrawable().getState() == FragmentContextViewWavesDrawable.MUTE_BUTTON_STATE_MUTED_BY_ADMIN;
             Theme.getFragmentContextViewWavesDrawable().updateState(wasDraw);
 

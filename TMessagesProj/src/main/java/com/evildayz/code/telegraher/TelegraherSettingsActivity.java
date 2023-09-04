@@ -27,24 +27,18 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
+import android.widget.TextView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.devicespoofing.DSMainActivity;
-import com.evildayz.code.telegraher.ui.UIFontActivity;
+//import com.evildayz.code.telegraher.devicespoofing.DSMainActivity;
+//import com.evildayz.code.telegraher.ui.UIFontActivity;
 
-import org.telegram.messenger.LocaleController;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.NotificationCenter;
-import org.telegram.messenger.R;
-import org.telegram.messenger.UserConfig;
-import org.telegram.ui.ActionBar.ActionBar;
-import org.telegram.ui.ActionBar.AlertDialog;
-import org.telegram.ui.ActionBar.BaseFragment;
-import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.ActionBar.ThemeDescription;
+import com.evildayz.code.telegraher.session.THDeviceSpoofingEditActivity;
+import com.evildayz.code.telegraher.session.ThSessionManagerActivity;
+import org.telegram.messenger.*;
+import org.telegram.ui.ActionBar.*;
 import org.telegram.ui.Cells.HeaderCell;
 import org.telegram.ui.Cells.NotificationsCheckCell;
 import org.telegram.ui.Cells.ShadowSectionCell;
@@ -58,9 +52,8 @@ import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SlideChooseView;
 import org.telegram.ui.QrActivity;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
 public class TelegraherSettingsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
     private RecyclerListView listView;
@@ -84,6 +77,9 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
     private int uiLabelRow;
     private int uiAppNotificationIconRow;
     private int uiAppNotificationIconSelectorRow;
+    private int uiStickerSizeLabelRow;
+    private int uiStickerSizeRow;
+    private int uiAppHidePhoneNumberOnLeftPanelRow;
     private int uiSystemFontRegularRow;
     private int uiSystemFontBoldRow;
     private int uiSystemFontItalicRow;
@@ -95,6 +91,9 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
     private int hardwareProximitySensorModeRow;
     private int hardwareDisableVibroRow;
 
+    private int privacyLabelRow;
+    private int privacyDontCallAppleRow;
+
     private int profileLabelRow;
     private int profileUIDRow;
     private int profileDCIDRow;
@@ -102,8 +101,14 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
 
     private int chatLabelRow;
     private int chatDeleteMarkRow;
+    private int chatEnableMessageHistoryRow;
     private int chatSBFullRow;
+    private int chatSBManagerRow;
     private int chatSwapToNextChannelRow;
+    private int chatTabsOnForwardRow;
+    private int chatDisableSpoilersRow;
+    private int chatRealForwardedMessageTimeRow;
+    private int chatHideStickersRow;
 
     private int videoLabelRoundBitrateRow;
     private int videoRoundBitrateMultRow;
@@ -118,13 +123,25 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
     private int gifHDRow;
 
     private int accountLabelRow;
+    private int accountSessionManagerRow;
     private int accountExtendVanillaRow;
+
+    private int graheriumLabelRow;
+    private int graheriumSpeedUpUpload;
+    private int graheriumSpeedUpDownload;
+    private int graheriumAnimateEveryAvatar;
+    private int graheriumVanillaStickerFlow;
+    private int graheriumAnimatedStickerOverlays;
+    private int graheriumStarrLabelRow;
+    private int graheriumStarrMark;
+    private int graheriumOverrideConnectionSpeedLabelRow;
+    private int graheriumOverrideConnectionSpeed;
 
     private int deviceSpoofingLabelRow;
     private int deviceSpoofingBrand;
     private int deviceSpoofingModel;
-    private int deviceSpoofingOS;
-    private int deviceSpoofingResetGlobalLabelRow;
+    private int deviceSpoofingSDK;
+    private int deviceSpoofingResetDefaultLabelRow;
 
     private int killMeLabelRow;
 
@@ -138,11 +155,14 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
         uiLabelRow = rowCount++;
         uiAppNotificationIconRow = rowCount++;
         uiAppNotificationIconSelectorRow = rowCount++;
-//        uiSystemFontRegularRow = rowCount++;//TODO WTF need the fuck make it work
-//        uiSystemFontBoldRow = rowCount++;
-//        uiSystemFontItalicRow = rowCount++;
-//        uiSystemFontBoldItalicRow = rowCount++;
-//        uiSystemFontMonoRow = rowCount++;
+        uiStickerSizeLabelRow = rowCount++;
+        uiStickerSizeRow = rowCount++;
+        uiAppHidePhoneNumberOnLeftPanelRow = rowCount++;
+        uiSystemFontRegularRow = -1;//TODO WTF need the fuck make it work
+        uiSystemFontBoldRow = -1;
+        uiSystemFontItalicRow = -1;
+        uiSystemFontBoldItalicRow = -1;
+        uiSystemFontMonoRow = -1;
 
         voiceLabelRow = rowCount++;
         voiceHDRow = rowCount++;
@@ -158,6 +178,9 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
         hardwareProximitySensorModeRow = rowCount++;
         hardwareDisableVibroRow = rowCount++;
 
+        privacyLabelRow = rowCount++;
+        privacyDontCallAppleRow = rowCount++;
+
         profileLabelRow = rowCount++;
         profileUIDRow = rowCount++;
         profileDCIDRow = rowCount++;
@@ -165,11 +188,28 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
 
         chatLabelRow = rowCount++;
         chatDeleteMarkRow = rowCount++;
+        chatEnableMessageHistoryRow = rowCount++;
         chatSBFullRow = rowCount++;
+        chatSBManagerRow = rowCount++;
         chatSwapToNextChannelRow = rowCount++;
+        chatTabsOnForwardRow = rowCount++;
+        chatDisableSpoilersRow = rowCount++;
+        chatRealForwardedMessageTimeRow = rowCount++;
+        chatHideStickersRow = rowCount++;
 
         accountLabelRow = rowCount++;
-        accountExtendVanillaRow = rowCount++;
+        accountSessionManagerRow = rowCount++;
+        accountExtendVanillaRow = -1;
+        graheriumLabelRow = rowCount++;
+        graheriumSpeedUpUpload = rowCount++;
+        graheriumSpeedUpDownload = rowCount++;
+        graheriumAnimateEveryAvatar = rowCount++;
+        graheriumVanillaStickerFlow = rowCount++;
+        graheriumAnimatedStickerOverlays = rowCount++;
+        graheriumStarrLabelRow = rowCount++;
+        graheriumStarrMark = rowCount++;
+        graheriumOverrideConnectionSpeedLabelRow = rowCount++;
+        graheriumOverrideConnectionSpeed = rowCount++;
 
         gifLabelHDRow = rowCount++;
         gifHDRow = rowCount++;
@@ -185,8 +225,8 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
         deviceSpoofingLabelRow = rowCount++;
         deviceSpoofingBrand = rowCount++;
         deviceSpoofingModel = rowCount++;
-        deviceSpoofingOS = rowCount++;
-        deviceSpoofingResetGlobalLabelRow = rowCount++;
+        deviceSpoofingSDK = rowCount++;
+        deviceSpoofingResetDefaultLabelRow = rowCount++;
 
         killMeLabelRow = rowCount++;
 
@@ -244,111 +284,189 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                 enabled = preferences.getBoolean("EnableVoiceHD", false);
                 editor.putBoolean("EnableVoiceHD", !enabled);
                 if (enabled) editor.putBoolean("EnableVoiceBadman", false);
-                editor.commit();
+                editor.apply();
             } else if (position == voiceBadmanRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableVoiceBadman", false);
                 editor.putBoolean("EnableVoiceBadman", preferences.getBoolean("EnableVoiceHD", false) && !enabled);
                 if (!preferences.getBoolean("EnableVoiceHD", false)) enabled = true;
-                editor.commit();
+                editor.apply();
             } else if (position == voipHDRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableVoIPHD", false);
                 editor.putBoolean("EnableVoIPHD", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == voipDisableStartBeep) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("VoipDisableStartBeep", false);
                 editor.putBoolean("VoipDisableStartBeep", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == voipDisableEndBeep) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("VoipDisableEndBeep", false);
                 editor.putBoolean("VoipDisableEndBeep", !enabled);
-                editor.commit();
+                editor.apply();
+            } else if (position == privacyDontCallAppleRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("PrivacyDontCallApple", true);
+                editor.putBoolean("PrivacyDontCallApple", !enabled);
+                editor.apply();
             } else if (position == profileUIDRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableProfileUID", true);
                 editor.putBoolean("EnableProfileUID", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == profileDCIDRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableProfileDCID", true);
                 editor.putBoolean("EnableProfileDCID", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == profileSBRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableProfileSB", true);
                 editor.putBoolean("EnableProfileSB", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == chatDeleteMarkRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableChatDeleteMark", true);
                 editor.putBoolean("EnableChatDeleteMark", !enabled);
-                editor.commit();
+                editor.apply();
+            } else if (position == chatEnableMessageHistoryRow) {
+                SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableMessageHistory", true);
+                editor.putBoolean("EnableMessageHistory", !enabled);
+                editor.apply();
             } else if (position == chatSBFullRow) {
                 SharedPreferences preferences = MessagesController.getTelegraherSettings(currentAccount);
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableChatSBFull", false);
                 editor.putBoolean("EnableChatSBFull", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == chatSwapToNextChannelRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableSwapToNextChannel", false);
                 editor.putBoolean("EnableSwapToNextChannel", !enabled);
-                editor.commit();
+                editor.apply();
+            } else if (position == chatTabsOnForwardRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableTabsOnForward", false);
+                editor.putBoolean("EnableTabsOnForward", !enabled);
+                editor.apply();
+            } else if (position == chatDisableSpoilersRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("DisableSpoilers", false);
+                editor.putBoolean("DisableSpoilers", !enabled);
+                editor.apply();
+            } else if (position == chatRealForwardedMessageTimeRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("RealForwardedMessageTime", true);
+                editor.putBoolean("RealForwardedMessageTime", !enabled);
+                editor.apply();
+            } else if (position == chatHideStickersRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("HideStickers", false);
+                editor.putBoolean("HideStickers", !enabled);
+                editor.apply();
             } else if (position == accountExtendVanillaRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableAccountExtendVanilla", false);
                 editor.putBoolean("EnableAccountExtendVanilla", !enabled);
-                editor.commit();
+                editor.apply();
+            } else if (position == graheriumSpeedUpUpload) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableGraheriumSpeedUpUpload", false);
+                editor.putBoolean("EnableGraheriumSpeedUpUpload", !enabled);
+                editor.apply();
+            } else if (position == graheriumSpeedUpDownload) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableGraheriumSpeedUpDownload", false);
+                editor.putBoolean("EnableGraheriumSpeedUpDownload", !enabled);
+                editor.apply();
+            } else if (position == graheriumAnimateEveryAvatar) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableGraheriumAnimateEveryAvatar", false);
+                editor.putBoolean("EnableGraheriumAnimateEveryAvatar", !enabled);
+                editor.apply();
+            } else if (position == graheriumAnimatedStickerOverlays) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableGraheriumAnimatedStickerOverlays", false);
+                if (preferences.getBoolean("EnableGraheriumVanillaStickerFlow", true)) enabled = true;
+                editor.putBoolean("EnableGraheriumAnimatedStickerOverlays", !preferences.getBoolean("EnableGraheriumVanillaStickerFlow", true) && !enabled);
+                editor.apply();
+            } else if (position == graheriumVanillaStickerFlow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("EnableGraheriumVanillaStickerFlow", true);
+                if (!enabled) editor.putBoolean("EnableGraheriumAnimatedStickerOverlays", false);
+                editor.putBoolean("EnableGraheriumVanillaStickerFlow", !enabled);
+                editor.apply();
             } else if (position == gifHDRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("EnableGifHD", false);
                 editor.putBoolean("EnableGifHD", !enabled);
-                editor.commit();
+                editor.apply();
+            } else if (position == uiAppHidePhoneNumberOnLeftPanelRow) {
+                SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
+                SharedPreferences.Editor editor = preferences.edit();
+                enabled = preferences.getBoolean("HidePhoneNumberOnLeftPanel", false);
+                editor.putBoolean("HidePhoneNumberOnLeftPanel", !enabled);
+                editor.apply();
             } else if (position == videoRoundUseMainCameraRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("VideoRoundUseMainCamera", false);
                 editor.putBoolean("VideoRoundUseMainCamera", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == hardwareDisableVibroRow) {
                 SharedPreferences preferences = MessagesController.getGlobalTelegraherSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 enabled = preferences.getBoolean("HardwareDisableVibro", false);
                 editor.putBoolean("HardwareDisableVibro", !enabled);
-                editor.commit();
+                editor.apply();
             } else if (position == killMeLabelRow) {
                 killThatApp();
-            } else if (position == uiSystemFontRegularRow) {
-                presentFragment(new UIFontActivity("fonts/rmedium.ttf", "regular"));
-            } else if (position == uiSystemFontBoldRow) {
-                presentFragment(new UIFontActivity("fonts/rmedium.ttf", "rmedium"));
-            } else if (position == uiSystemFontItalicRow) {
-                presentFragment(new UIFontActivity("fonts/ritalic.ttf", "ritalic"));
-            } else if (position == uiSystemFontBoldItalicRow) {
-                presentFragment(new UIFontActivity("fonts/rmediumitalic.ttf", "rmediumitalic"));
-            } else if (position == uiSystemFontMonoRow) {
-                presentFragment(new UIFontActivity("fonts/rmono.ttf", "rmono"));
+            } else if (position == chatSBManagerRow) {
+                presentFragment(new ThShadowbanManagerActivity());
+            } else if (position == accountSessionManagerRow) {
+                presentFragment(new ThSessionManagerActivity());
+//            } else if (position == uiSystemFontRegularRow) {
+//                presentFragment(new UIFontActivity("fonts/rmedium.ttf", "regular"));
+//            } else if (position == uiSystemFontBoldRow) {
+//                presentFragment(new UIFontActivity("fonts/rmedium.ttf", "rmedium"));
+//            } else if (position == uiSystemFontItalicRow) {
+//                presentFragment(new UIFontActivity("fonts/ritalic.ttf", "ritalic"));
+//            } else if (position == uiSystemFontBoldItalicRow) {
+//                presentFragment(new UIFontActivity("fonts/rmediumitalic.ttf", "rmediumitalic"));
+//            } else if (position == uiSystemFontMonoRow) {
+//                presentFragment(new UIFontActivity("fonts/rmono.ttf", "rmono"));
             } else if (position == deviceSpoofingBrand) {
-                showDSAlert(0);
+                presentFragment(new THDeviceSpoofingEditActivity(0, -1));
             } else if (position == deviceSpoofingModel) {
-                showDSAlert(1);
-            } else if (position == deviceSpoofingOS) {
-                showDSAlert(2);
-            } else if (position == deviceSpoofingResetGlobalLabelRow) {
+                presentFragment(new THDeviceSpoofingEditActivity(1, -1));
+            } else if (position == deviceSpoofingSDK) {
+                presentFragment(new THDeviceSpoofingEditActivity(2, -1));
+            } else if (position == deviceSpoofingResetDefaultLabelRow) {
                 showDSResetGlobalAlert();
             }
             if (view instanceof TextCheckCell) {
@@ -450,10 +568,14 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         headerCell.setText(LocaleController.getString(R.string.THUILabelRow));
                     } else if (position == uiAppNotificationIconRow) {
                         headerCell.setText(LocaleController.getString(R.string.THUIAppNotificationIconRow));
+                    } else if (position == uiStickerSizeLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THUIStickerSize));
                     } else if (position == voiceLabelRow) {
                         headerCell.setText(LocaleController.getString(R.string.THVoiceLabelRow));
                     } else if (position == voipLabelRow) {
                         headerCell.setText(LocaleController.getString(R.string.THVoipLabelRow));
+                    } else if (position == privacyLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THPrivacyRowLabel));
                     } else if (position == profileLabelRow) {
                         headerCell.setText(LocaleController.getString(R.string.THProfileLabelRow));
                     } else if (position == hardwareLabelRow) {
@@ -472,10 +594,16 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         headerCell.setText(LocaleController.getString(R.string.THVideoLabelRoundSizeRow));
                     } else if (position == accountLabelRow) {
                         headerCell.setText(LocaleController.getString(R.string.THAccountLabelRow));
+                    } else if (position == graheriumLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THDGraheriumLabelRow));
+                    } else if (position == graheriumStarrLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THGraheriumStarrLabel));
+                    } else if (position == graheriumOverrideConnectionSpeedLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THGraheriumOverrideConnectionSpeed));
                     } else if (position == deviceSpoofingLabelRow) {
                         headerCell.setText(LocaleController.getString(R.string.THDeviceSpoofingLabelRow));
-                    } else if (position == deviceSpoofingResetGlobalLabelRow) {
-                        headerCell.setText(LocaleController.getString(R.string.THDeviceSpoofingResetGlobalLabelRow));
+                    } else if (position == deviceSpoofingResetDefaultLabelRow) {
+                        headerCell.setText(LocaleController.getString(R.string.THDeviceSpoofingResetDefaultLabelRow));
                     } else if (position == showLabelTelegraherMenuRow) {
                         headerCell.setText(LocaleController.getString(R.string.THShowLabelTelegraherMenuRow));
                     }
@@ -497,6 +625,8 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THVoipDisableStartBeep), globalPreps.getBoolean("VoipDisableStartBeep", false), true);
                     } else if (position == voipDisableEndBeep) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THVoipDisableEndBeep), globalPreps.getBoolean("VoipDisableEndBeep", false), true);
+                    } else if (position == privacyDontCallAppleRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THPrivacyDontCallApple), globalPreps.getBoolean("PrivacyDontCallApple", true), true);
                     } else if (position == profileUIDRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableProfileUID), localPreps.getBoolean("EnableProfileUID", true), true);
                     } else if (position == hardwareDisableVibroRow) {
@@ -507,12 +637,34 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableProfileSB), localPreps.getBoolean("EnableProfileSB", true), true);
                     } else if (position == chatDeleteMarkRow) {
                         checkCell.setTextAndCheck(String.format(LocaleController.getString(R.string.THEnableChatDeleteMark), LocaleController.getString("DeletedMessage", R.string.DeletedMessage)), localPreps.getBoolean("EnableChatDeleteMark", true), true);
+                    } else if (position == chatEnableMessageHistoryRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableMessageHistory), localPreps.getBoolean("EnableMessageHistory", true), true);
                     } else if (position == accountExtendVanillaRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableAccountExtendVanilla), globalPreps.getBoolean("EnableAccountExtendVanilla", false), true);
+                    } else if (position == graheriumSpeedUpUpload) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THDGraheriumSpeedUpUpload), globalPreps.getBoolean("EnableGraheriumSpeedUpUpload", false), true);
+                    } else if (position == graheriumSpeedUpDownload) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THDGraheriumSpeedUpDownload), globalPreps.getBoolean("EnableGraheriumSpeedUpDownload", false), true);
+                    } else if (position == graheriumAnimateEveryAvatar) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THGraheriumAnimateEveryAvatar), globalPreps.getBoolean("EnableGraheriumAnimateEveryAvatar", false), true);
+                    } else if (position == graheriumAnimatedStickerOverlays) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THGraheriumAnimatedStickerOverlays), globalPreps.getBoolean("EnableGraheriumAnimatedStickerOverlays", false), true);
+                    } else if (position == graheriumVanillaStickerFlow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THGraheriumVanillaStickerFlow), globalPreps.getBoolean("EnableGraheriumVanillaStickerFlow", true), true);
+                    } else if (position == uiAppHidePhoneNumberOnLeftPanelRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THHidePhoneNumberOnLeftPanel), globalPreps.getBoolean("HidePhoneNumberOnLeftPanel", false), true);
                     } else if (position == chatSBFullRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableChatSBFull), localPreps.getBoolean("EnableChatSBFull", false), true);
                     } else if (position == chatSwapToNextChannelRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableSwapToNextChannel), globalPreps.getBoolean("EnableSwapToNextChannel", false), true);
+                    } else if (position == chatTabsOnForwardRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableTabsOnForward), globalPreps.getBoolean("EnableTabsOnForward", false), true);
+                    } else if (position == chatDisableSpoilersRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THDisableSpoilers), globalPreps.getBoolean("DisableSpoilers", false), true);
+                    } else if (position == chatRealForwardedMessageTimeRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THChatRealForwardedMessageTime), globalPreps.getBoolean("RealForwardedMessageTime", true), true);
+                    } else if (position == chatHideStickersRow) {
+                        checkCell.setTextAndCheck(LocaleController.getString(R.string.THChatHideStickers), globalPreps.getBoolean("HideStickers", false), true);
                     } else if (position == gifHDRow) {
                         checkCell.setTextAndCheck(LocaleController.getString(R.string.THEnableGifHD), globalPreps.getBoolean("EnableGifHD", false), true);
                     } else if (position == videoRoundUseMainCameraRow) {
@@ -528,6 +680,17 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         textSettingsCell.setCanDisable(false);
                         textSettingsCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteRedText));
                         textSettingsCell.setText(LocaleController.getString(R.string.THKillTheAPP), false);
+                    } else if (position == chatSBManagerRow) {
+                        textSettingsCell.setCanDisable(false);
+                        textSettingsCell.setText(LocaleController.getString(R.string.THChatSBManager), false);
+                    } else if (position == accountSessionManagerRow) {
+                        textSettingsCell.setCanDisable(false);
+                        int activeAccountsNumber = SharedConfig.activeAccounts == null ? 0 : SharedConfig.activeAccounts.size();
+                        int offlineAccountsNumber = SharedConfig.thAccounts == null ? 0 : (SharedConfig.thAccounts.size() - activeAccountsNumber - 1);
+                        textSettingsCell.setText(String.format(LocaleController.getString(R.string.THAccountSessionManager)
+                                , activeAccountsNumber
+                                , offlineAccountsNumber
+                        ), false);
                     } else if (position == uiSystemFontRegularRow) {
                         textSettingsCell.setCanDisable(false);
                         textSettingsCell.setText(LocaleController.getString(R.string.THUIUseCustomFontRegular), false);
@@ -560,11 +723,11 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences localMain = MessagesController.getMainSettings(currentAccount);
                                 SharedPreferences.Editor editor = localTh.edit();
                                 editor.putInt("VideoRoundBitrateMult", index);
-                                editor.commit();
+                                editor.apply();
                                 editor = localMain.edit();
                                 editor.putInt("roundVideoBitrate", (int) (1000 * ThePenisMightierThanTheSword.getVideoRoundMult(index)));
                                 editor.putInt("roundAudioBitrate", (int) (64 * ThePenisMightierThanTheSword.getVideoRoundMult(index)));
-                                editor.commit();
+                                editor.apply();
                                 MessagesController.getInstance(currentAccount).roundVideoBitrate = MessagesController.getMainSettings(currentAccount).getInt("roundVideoBitrate", 1000);
                                 MessagesController.getInstance(currentAccount).roundAudioBitrate = MessagesController.getMainSettings(currentAccount).getInt("roundAudioBitrate", 64);
                                 System.out.printf("HEY %d %d %d%n", MessagesController.getMainSettings(currentAccount).getInt("roundVideoSize", 384)
@@ -582,10 +745,10 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences localMain = MessagesController.getMainSettings(currentAccount);
                                 SharedPreferences.Editor editor = localTh.edit();
                                 editor.putInt("VideoRoundSizeMult", index);
-                                editor.commit();
+                                editor.apply();
                                 editor = localMain.edit();
                                 editor.putInt("roundVideoSize", ThePenisMightierThanTheSword.getVideoRoundSize(index));
-                                editor.commit();
+                                editor.apply();
                                 MessagesController.getInstance(currentAccount).roundVideoSize = MessagesController.getMainSettings(currentAccount).getInt("roundVideoSize", 384);
                                 System.out.printf("HEY %d %d %d%n", MessagesController.getMainSettings(currentAccount).getInt("roundVideoSize", 384)
                                         , MessagesController.getMainSettings(currentAccount).getInt("roundVideoBitrate", 1000)
@@ -601,7 +764,7 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
                                 SharedPreferences.Editor editor = globalTh.edit();
                                 editor.putInt("ShowTelegraherMenu2", index);
-                                editor.commit();
+                                editor.apply();
                             }
                         });
                     } else if (position == videoMaxResolutionRow) {
@@ -613,7 +776,7 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
                                 SharedPreferences.Editor editor = globalTh.edit();
                                 editor.putInt("VideoMaxResolution", index);
-                                editor.commit();
+                                editor.apply();
                             }
                         });
                     } else if (position == hardwareProximitySensorModeRow) {
@@ -629,14 +792,15 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
                                 SharedPreferences.Editor editor = globalTh.edit();
                                 editor.putInt("HardwareProximitySensorMode", index);
-                                editor.commit();
+                                editor.apply();
                             }
                         });
                     } else if (position == uiAppNotificationIconSelectorRow) {
                         String[] strings = new String[]{
                                 LocaleController.getString(R.string.THUIAppNotificationIconRow0),
                                 LocaleController.getString(R.string.THUIAppNotificationIconRow1),
-                                LocaleController.getString(R.string.THUIAppNotificationIconRow2)
+                                LocaleController.getString(R.string.THUIAppNotificationIconRow2),
+                                LocaleController.getString(R.string.THUIAppNotificationIconRow3)
                         };
                         slideChooseView.setOptions(MessagesController.getGlobalTelegraherSettings().getInt("UIAppNotificationIconSelector", 0), strings);
                         slideChooseView.setCallback(new SlideChooseView.Callback() {
@@ -645,7 +809,48 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                                 SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
                                 SharedPreferences.Editor editor = globalTh.edit();
                                 editor.putInt("UIAppNotificationIconSelector", index);
-                                editor.commit();
+                                editor.apply();
+                            }
+                        });
+                    } else if (position == uiStickerSizeRow) {
+                        String[] strings = new String[]{
+                                "x0.25",
+                                "x0.5",
+                                "x1",
+                                "x2",
+                        };
+                        slideChooseView.setOptions(MessagesController.getGlobalTelegraherSettings().getInt("UIStickerSize", 2), strings);
+                        slideChooseView.setCallback(new SlideChooseView.Callback() {
+                            @Override
+                            public void onOptionSelected(int index) {
+                                SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
+                                SharedPreferences.Editor editor = globalTh.edit();
+                                editor.putInt("UIStickerSize", index);
+                                editor.apply();
+                            }
+                        });
+                    } else if (position == graheriumStarrMark) {
+                        String[] strings = new String[]{LocaleController.getString(R.string.THGraheriumStarrNoone), LocaleController.getString(R.string.THGraheriumStarrEveryone), LocaleController.getString(R.string.THGraheriumStarrPeperemiumOnly)};
+                        slideChooseView.setOptions(MessagesController.getGlobalTelegraherSettings().getInt("GraheriumStarrMark", 0), strings);
+                        slideChooseView.setCallback(new SlideChooseView.Callback() {
+                            @Override
+                            public void onOptionSelected(int index) {
+                                SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
+                                SharedPreferences.Editor editor = globalTh.edit();
+                                editor.putInt("GraheriumStarrMark", index);
+                                editor.apply();
+                            }
+                        });
+                    } else if (position == graheriumOverrideConnectionSpeed) {
+                        String[] strings = new String[]{LocaleController.getString(R.string.THGraheriumOverrideConnectionSpeedAuto), LocaleController.getString(R.string.THGraheriumOverrideConnectionSpeedSlow), LocaleController.getString(R.string.THGraheriumOverrideConnectionSpeedHigh)};
+                        slideChooseView.setOptions(MessagesController.getGlobalTelegraherSettings().getInt("GraheriumConnectionSpeed", 0), strings);
+                        slideChooseView.setCallback(new SlideChooseView.Callback() {
+                            @Override
+                            public void onOptionSelected(int index) {
+                                SharedPreferences globalTh = MessagesController.getGlobalTelegraherSettings();
+                                SharedPreferences.Editor editor = globalTh.edit();
+                                editor.putInt("GraheriumConnectionSpeed", index);
+                                editor.apply();
                             }
                         });
                     }
@@ -657,15 +862,15 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                         //durov relogin!
                     } else if (position == deviceSpoofingBrand) {
                         textDetailCell.setContentDescriptionValueFirst(true);
-                        textDetailCell.setTextAndValue(UserConfig.hmGetBrand(-1), String.format(LocaleController.getString(R.string.THDSBrandCurrentText), UserConfig.hmGetBrand(currentAccount)), false);
+                        textDetailCell.setTextAndValue(SharedConfig.thDeviceSpoofing.get(-1).get("deviceBrand"), String.format(LocaleController.getString(R.string.THDSBrandCurrentText), SharedConfig.thDeviceSpoofing.containsKey(currentAccount) ? SharedConfig.thDeviceSpoofing.get(currentAccount).get("deviceBrand") : "-"), false);
                     } else if (position == deviceSpoofingModel) {
                         textDetailCell.setContentDescriptionValueFirst(true);
                         textDetailCell.setImageClickListener(TelegraherSettingsActivity.this::onTextDetailCellImageClicked);
-                        textDetailCell.setTextAndValue(UserConfig.hmGetModel(-1), String.format(LocaleController.getString(R.string.THDSModelCurrentText), UserConfig.hmGetModel(currentAccount)), false);
-                    } else if (position == deviceSpoofingOS) {
+                        textDetailCell.setTextAndValue(SharedConfig.thDeviceSpoofing.get(-1).get("deviceModel"), String.format(LocaleController.getString(R.string.THDSModelCurrentText), SharedConfig.thDeviceSpoofing.containsKey(currentAccount) ? SharedConfig.thDeviceSpoofing.get(currentAccount).get("deviceModel") : "-"), false);
+                    } else if (position == deviceSpoofingSDK) {
                         textDetailCell.setContentDescriptionValueFirst(true);
                         textDetailCell.setImageClickListener(TelegraherSettingsActivity.this::onTextDetailCellImageClicked);
-                        textDetailCell.setTextAndValue(UserConfig.hmGetOS(-1), String.format(LocaleController.getString(R.string.THDSOSCurrentText), UserConfig.hmGetOS(currentAccount)), false);
+                        textDetailCell.setTextAndValue(SharedConfig.thDeviceSpoofing.get(-1).get("deviceSDK"), String.format(LocaleController.getString(R.string.THDSSDKCurrentText), SharedConfig.thDeviceSpoofing.containsKey(currentAccount) ? SharedConfig.thDeviceSpoofing.get(currentAccount).get("deviceSDK") : "-"), false);
                     }
                     break;
                 }
@@ -678,15 +883,20 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                     position == showLabelTelegraherMenuRow
                             || position == uiLabelRow
                             || position == uiAppNotificationIconRow
+                            || position == uiStickerSizeLabelRow
                             || position == voiceLabelRow || position == voipLabelRow
+                            || position == privacyLabelRow
                             || position == profileLabelRow
                             || position == hardwareLabelRow
                             || position == hardwareProximitySensorModeLabelRow
                             || position == chatLabelRow
                             || position == gifLabelHDRow
                             || position == accountLabelRow
+                            || position == graheriumLabelRow
+                            || position == graheriumStarrLabelRow
+                            || position == graheriumOverrideConnectionSpeedLabelRow
                             || position == deviceSpoofingLabelRow
-                            || position == deviceSpoofingResetGlobalLabelRow
+                            || position == deviceSpoofingResetDefaultLabelRow
                             || position == videoLabelMaxResolutionRow
                             || position == videoLabelRoundBitrateRow
                             || position == videoLabelRoundSizeRow
@@ -695,13 +905,18 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
             } else if (
                     position == voiceHDRow || position == voiceBadmanRow
                             || position == voipHDRow || position == voipDisableStartBeep || position == voipDisableEndBeep
+                            || position == privacyDontCallAppleRow
                             || position == profileUIDRow || position == profileDCIDRow || position == profileSBRow
                             || position == hardwareDisableVibroRow
-                            || position == chatDeleteMarkRow || position == accountExtendVanillaRow || position == chatSBFullRow || position == chatSwapToNextChannelRow
+                            || position == chatDeleteMarkRow || position == chatEnableMessageHistoryRow || position == accountExtendVanillaRow || position == chatSBFullRow
+                            || position == chatSwapToNextChannelRow || position == chatTabsOnForwardRow || position == chatDisableSpoilersRow || position == chatRealForwardedMessageTimeRow
+                            || position == chatHideStickersRow
+                            || position == graheriumSpeedUpUpload || position == graheriumSpeedUpDownload || position == graheriumAnimateEveryAvatar || position == graheriumAnimatedStickerOverlays || position == graheriumVanillaStickerFlow
                             || position == gifHDRow || position == videoRoundUseMainCameraRow
+                            || position == uiAppHidePhoneNumberOnLeftPanelRow
             ) {
                 return 1;
-            } else if (position == killMeLabelRow
+            } else if (position == killMeLabelRow || position == chatSBManagerRow || position == accountSessionManagerRow
                     || position == uiSystemFontRegularRow || position == uiSystemFontBoldRow || position == uiSystemFontItalicRow || position == uiSystemFontBoldItalicRow || position == uiSystemFontMonoRow
             ) {
                 return 5;
@@ -711,9 +926,12 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
                             || position == videoMaxResolutionRow
                             || position == hardwareProximitySensorModeRow
                             || position == uiAppNotificationIconSelectorRow
+                            || position == uiStickerSizeRow
+                            || position == graheriumStarrMark
+                            || position == graheriumOverrideConnectionSpeed
             ) {
                 return 6;
-            } else if (position == deviceSpoofingBrand || position == deviceSpoofingModel || position == deviceSpoofingOS) {
+            } else if (position == deviceSpoofingBrand || position == deviceSpoofingModel || position == deviceSpoofingSDK) {
                 return 7;
             } else
                 return 1337;
@@ -737,50 +955,50 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
         System.exit(0);
     }
 
-    private void showDSAlert(int labelId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
-        builder.setTitle(LocaleController.getString(R.string.THDSLabel));
-        builder.setMessage(String.format(LocaleController.getString(R.string.THDSOverrideLabel), DSMainActivity.DS_LABEL[labelId]));
-        builder.setNeutralButton(LocaleController.getString(R.string.THDSOverrideGlobal), (dialogInterface, i) -> {
-            try {
-                presentFragment(new DSMainActivity(labelId, 0, labelId));
-            } catch (Exception durovrelogin) {
-                durovrelogin.printStackTrace();
-            }
-        });
-        builder.setPositiveButton(LocaleController.getString(R.string.THDSOverrideCurrent), (dialogInterface, i) -> {
-            try {
-                presentFragment(new DSMainActivity(labelId, 1, labelId));
-            } catch (Exception durovrelogin) {
-                durovrelogin.printStackTrace();
-            }
-        });
-        builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
-        AlertDialog dialog = builder.create();
-        showDialog(dialog);
-        TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        if (button != null) {
-            button.setTextColor(Theme.getColor(Theme.key_dialogTextRed2));
-        }
-        button = (TextView) dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
-        if (button != null) {
-            button.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
-        }
-    }
+//    private void showDSAlert(int labelId) {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
+//        builder.setTitle(LocaleController.getString(R.string.THDSLabel));
+//        builder.setMessage(String.format(LocaleController.getString(R.string.THDSOverrideLabel), DSMainActivity.DS_LABEL[labelId]));
+//        builder.setNeutralButton(LocaleController.getString(R.string.THDSOverrideGlobal), (dialogInterface, i) -> {
+//            try {
+//                presentFragment(new DSMainActivity(labelId, 0, labelId));
+//            } catch (Exception durovrelogin) {
+//                durovrelogin.printStackTrace();
+//            }
+//        });
+//        builder.setPositiveButton(LocaleController.getString(R.string.THDSOverrideCurrent), (dialogInterface, i) -> {
+//            try {
+//                presentFragment(new DSMainActivity(labelId, 1, labelId));
+//            } catch (Exception durovrelogin) {
+//                durovrelogin.printStackTrace();
+//            }
+//        });
+//        builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
+//        AlertDialog dialog = builder.create();
+//        showDialog(dialog);
+//        TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+//        if (button != null) {
+//            button.setTextColor(Theme.getColor(Theme.key_dialogTextRed2));
+//        }
+//        button = (TextView) dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
+//        if (button != null) {
+//            button.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
+//        }
+//    }
 
-    private ArrayList<String> loadSystemFonts() {
-        ArrayList<String> fonts = new ArrayList<>();
-        fonts.add("fonts/rmedium.ttf");
-        try {
-            File dir = new File("/system/fonts");
-            String[] files = dir.list();
-            if (files == null) return fonts;
-            fonts.addAll(Arrays.asList(files));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return fonts;
-    }
+//    private ArrayList<String> loadSystemFonts() {
+//        ArrayList<String> fonts = new ArrayList<>();
+//        fonts.add("fonts/rmedium.ttf");
+//        try {
+//            File dir = new File("/system/fonts");
+//            String[] files = dir.list();
+//            if (files == null) return fonts;
+//            fonts.addAll(Arrays.asList(files));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return fonts;
+//    }
 
     private void showDSResetGlobalAlert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
@@ -788,9 +1006,12 @@ public class TelegraherSettingsActivity extends BaseFragment implements Notifica
         builder.setMessage(LocaleController.getString(R.string.THDSResetAlert));
         builder.setPositiveButton(LocaleController.getString(R.string.THYesYesYes), (dialogInterface, i) -> {
             try {
-                UserConfig.resetHmDevices();
-                UserConfig.syncHmDevices();
-                MessagesController.refreshGlobalTelegraherSettings();
+                SharedConfig.thDeviceSpoofing.put(-1,
+                        new HashMap<String, String>() {{
+                            put("deviceBrand", Build.MANUFACTURER);
+                            put("deviceModel", Build.MODEL);
+                            put("deviceSDK", Integer.valueOf(Build.VERSION.SDK_INT).toString());
+                        }});
             } catch (Exception durovrelogin) {
                 durovrelogin.printStackTrace();
             }

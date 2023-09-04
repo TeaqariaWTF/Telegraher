@@ -19,8 +19,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
@@ -239,6 +237,10 @@ public class EditTextEmoji extends FrameLayout implements NotificationCenter.Not
         emojiPadding = 0;
     }
 
+    public EmojiView getEmojiView() {
+        return emojiView;
+    }
+
     public void setDelegate(EditTextEmojiDelegate editTextEmojiDelegate) {
         delegate = editTextEmojiDelegate;
     }
@@ -381,7 +383,7 @@ public class EditTextEmoji extends FrameLayout implements NotificationCenter.Not
         }
     }
 
-    private void showPopup(int show) {
+    protected void showPopup(int show) {
         if (show == 1) {
             boolean emojiWasVisible = emojiView != null && emojiView.getVisibility() == View.VISIBLE;
             if (emojiView == null) {
@@ -475,7 +477,7 @@ public class EditTextEmoji extends FrameLayout implements NotificationCenter.Not
         }
     }
 
-    private void createEmojiView() {
+    protected void createEmojiView() {
         if (emojiView != null) {
             return;
         }
@@ -543,10 +545,10 @@ public class EditTextEmoji extends FrameLayout implements NotificationCenter.Not
         if (height > AndroidUtilities.dp(50) && keyboardVisible && !AndroidUtilities.isInMultiwindow && !AndroidUtilities.isTablet()) {
             if (isWidthGreater) {
                 keyboardHeightLand = height;
-                MessagesController.getGlobalEmojiSettings().edit().putInt("kbd_height_land3", keyboardHeightLand).commit();
+                MessagesController.getGlobalEmojiSettings().edit().putInt("kbd_height_land3", keyboardHeightLand).apply();
             } else {
                 keyboardHeight = height;
-                MessagesController.getGlobalEmojiSettings().edit().putInt("kbd_height", keyboardHeight).commit();
+                MessagesController.getGlobalEmojiSettings().edit().putInt("kbd_height", keyboardHeight).apply();
             }
         }
 

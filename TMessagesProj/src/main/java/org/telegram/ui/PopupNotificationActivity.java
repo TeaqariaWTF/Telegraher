@@ -37,8 +37,6 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DialogObject;
@@ -46,6 +44,7 @@ import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.NotificationsController;
 import org.telegram.messenger.SendMessagesHelper;
@@ -164,9 +163,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
         Theme.createChatResources(this, false);
 
         AndroidUtilities.fillStatusBarHeight(this);
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY PopupNotificationActivity onCreate [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.appDidLogout);
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.updateInterfaces);
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingProgressDidChanged);
@@ -482,7 +479,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
         nameTextView.setSingleLine(true);
         nameTextView.setEllipsize(TextUtils.TruncateAt.END);
         nameTextView.setGravity(Gravity.LEFT);
-        nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         avatarContainer.addView(nameTextView);
         layoutParams2 = (FrameLayout.LayoutParams) nameTextView.getLayoutParams();
         layoutParams2.width = LayoutHelper.WRAP_CONTENT;
@@ -812,7 +809,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
                         TextView textView = new TextView(this);
                         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
                         textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
-                        textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                         textView.setText(button.text.toUpperCase());
                         textView.setTag(button);
                         textView.setGravity(Gravity.CENTER);
@@ -899,7 +896,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
                 if (currentPhotoObject != null) {
                     boolean photoExist = true;
                     if (messageObject.type == 1) {
-                        File cacheFile = FileLoader.getPathToMessage(messageObject.messageOwner);
+                        File cacheFile = FileLoader.getInstance(UserConfig.selectedAccount).getPathToMessage(messageObject.messageOwner);
                         if (!cacheFile.exists()) {
                             photoExist = false;
                         }
@@ -1189,7 +1186,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
             }
             popupMessages.addAll(NotificationsController.getInstance(account).popupReplyMessages);
         } else {
-            for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            for (int a : SharedConfig.activeAccounts) {
                 if (UserConfig.getInstance(a).isClientActivated()) {
                     popupMessages.addAll(NotificationsController.getInstance(a).popupMessages);
                 }
@@ -1457,7 +1454,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
         } else if (id == NotificationCenter.pushMessagesUpdated) {
             if (!isReply) {
                 popupMessages.clear();
-                for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+                for (int a : SharedConfig.activeAccounts) {
                     if (UserConfig.getInstance(a).isClientActivated()) {
                         popupMessages.addAll(NotificationsController.getInstance(a).popupMessages);
                     }
@@ -1573,9 +1570,7 @@ public class PopupNotificationActivity extends Activity implements NotificationC
         if (isReply) {
             popupMessages.clear();
         }
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY PopupNotificationActivity onFinish [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.appDidLogout);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.updateInterfaces);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingProgressDidChanged);

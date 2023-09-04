@@ -26,8 +26,6 @@ import android.view.View;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.MediaController;
@@ -45,12 +43,15 @@ public class PhotoCropView extends FrameLayout {
         void onTapUp();
         int getVideoThumbX();
         void onVideoThumbClick();
+        boolean rotate();
+        boolean mirror();
     }
 
     private PhotoCropViewDelegate delegate;
 
-    private CropView cropView;
-    private CropRotationWheel wheelView;
+    public boolean isReset = true;
+    public CropView cropView;
+    public CropRotationWheel wheelView;
 
     private boolean inBubbleMode;
 
@@ -102,6 +103,7 @@ public class PhotoCropView extends FrameLayout {
         cropView.setListener(new CropView.CropViewListener() {
             @Override
             public void onChange(boolean reset) {
+                isReset = reset;
                 if (delegate != null) {
                     delegate.onChange(reset);
                 }
@@ -141,6 +143,7 @@ public class PhotoCropView extends FrameLayout {
             @Override
             public void onChange(float angle) {
                 cropView.setRotation(angle);
+                isReset = false;
                 if (delegate != null) {
                     delegate.onChange(false);
                 }
@@ -158,12 +161,18 @@ public class PhotoCropView extends FrameLayout {
 
             @Override
             public boolean rotate90Pressed() {
-                return rotate();
+                if (delegate != null) {
+                    return delegate.rotate();
+                }
+                return false;
             }
 
             @Override
             public boolean mirror() {
-                return PhotoCropView.this.mirror();
+                if (delegate != null) {
+                    return delegate.mirror();
+                }
+                return false;
             }
         });
         addView(wheelView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER | Gravity.BOTTOM, 0, 0, 0, 0));
@@ -220,11 +229,11 @@ public class PhotoCropView extends FrameLayout {
         return result;
     }
 
-    public boolean rotate() {
+    public boolean rotate(float diff) {
         if (wheelView != null) {
             wheelView.reset(false);
         }
-        return cropView.rotate90Degrees();
+        return cropView.rotate(diff);
     }
 
     public boolean mirror() {
@@ -317,8 +326,12 @@ public class PhotoCropView extends FrameLayout {
     }
 
     public void reset() {
+        reset(false);
+    }
+
+    public void reset(boolean force) {
         wheelView.reset(true);
-        cropView.reset();
+        cropView.reset(force);
     }
 
     public void onAppear() {

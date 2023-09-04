@@ -23,11 +23,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import org.telegram.PhoneFormat.PhoneFormat;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
@@ -102,7 +101,7 @@ public class ChatAttachAlertContactsLayout extends ChatAttachAlert.AttachAlertLa
 
             nameTextView = new SimpleTextView(context);
             nameTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
-            nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             nameTextView.setTextSize(16);
             nameTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
             addView(nameTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 28 : 72, 12, LocaleController.isRTL ? 72 : 28, 0));
@@ -162,9 +161,11 @@ public class ChatAttachAlertContactsLayout extends ChatAttachAlert.AttachAlertLa
                     } else {
                         statusTextView.setText("");
                         Utilities.globalQueue.postRunnable(() -> {
-                            formattedPhoneNumber = PhoneFormat.getInstance().format("+" + currentUser.phone);
-                            formattedPhoneNumberUser = currentUser;
-                            AndroidUtilities.runOnUIThread(() -> statusTextView.setText(formattedPhoneNumber));
+                            if (currentUser != null) {
+                                formattedPhoneNumber = PhoneFormat.getInstance().format("+" + currentUser.phone);
+                                formattedPhoneNumberUser = currentUser;
+                                AndroidUtilities.runOnUIThread(() -> statusTextView.setText(formattedPhoneNumber));
+                            }
                         });
                     }
                 }

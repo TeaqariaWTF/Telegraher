@@ -22,8 +22,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.FileLog;
@@ -329,7 +327,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 } else {
                     getMessagesController().secretWebpagePreview = 1;
                 }
-                MessagesController.getGlobalMainSettings().edit().putInt("secretWebpage2", getMessagesController().secretWebpagePreview).commit();
+                MessagesController.getGlobalMainSettings().edit().putInt("secretWebpage2", getMessagesController().secretWebpagePreview).apply();
                 if (view instanceof TextCheckCell) {
                     ((TextCheckCell) view).setChecked(getMessagesController().secretWebpagePreview == 1);
                 }
@@ -537,7 +535,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         passwordRow = rowCount++;
         sessionsRow = rowCount++;
         sessionsDetailRow = rowCount++;
-        if (getMessagesController().autoarchiveAvailable) {
+        if (getMessagesController().autoarchiveAvailable || getUserConfig().isPremium()) {
             newChatsHeaderRow = rowCount++;
             newChatsRow = rowCount++;
             newChatsSectionRow = rowCount++;
@@ -721,7 +719,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
-            return position == passcodeRow || position == passwordRow || position == blockedRow || position == sessionsRow || position == secretWebpageRow || position == nonsecretWebpageRow || position == webSessionsRow ||
+            return position == passcodeRow || position == passwordRow || position == blockedRow || position == sessionsRow || position == secretWebpageRow || position == webSessionsRow ||
+                    position == nonsecretWebpageRow ||
                     position == groupsRow && !getContactsController().getLoadingPrivicyInfo(ContactsController.PRIVACY_RULES_TYPE_INVITE) ||
                     position == lastSeenRow && !getContactsController().getLoadingPrivicyInfo(ContactsController.PRIVACY_RULES_TYPE_LASTSEEN) ||
                     position == callsRow && !getContactsController().getLoadingPrivicyInfo(ContactsController.PRIVACY_RULES_TYPE_CALLS) ||

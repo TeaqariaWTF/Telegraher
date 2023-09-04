@@ -1,7 +1,5 @@
 package org.telegram.ui.Charts.view_data;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 public class ChartHorizontalLinesData {

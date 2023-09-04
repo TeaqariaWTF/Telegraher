@@ -13,14 +13,12 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.Theme;
-import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Charts.BaseChartView;
+import org.telegram.ui.Components.LayoutHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,12 +42,12 @@ public class ChartHeaderView extends FrameLayout {
         super(context);
         TextPaint textPaint = new TextPaint();
         textPaint.setTextSize(14);
-        textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textMargin = (int) textPaint.measureText("00 MMM 0000 - 00 MMM 000");
 
         title = new TextView(context);
         title.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        title.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        title.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         addView(title, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL, 16, 0, textMargin, 0));
 
         back = new TextView(context);
@@ -60,13 +58,13 @@ public class ChartHeaderView extends FrameLayout {
 
         dates = new TextView(context);
         dates.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-        dates.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        dates.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         dates.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         addView(dates, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL, 16, 0, 16, 0));
 
         datesTmp = new TextView(context);
         datesTmp.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-        datesTmp.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        datesTmp.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         datesTmp.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         addView(datesTmp, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL, 16, 0, 16, 0));
         datesTmp.setVisibility(View.GONE);
@@ -74,7 +72,7 @@ public class ChartHeaderView extends FrameLayout {
 
         back.setVisibility(View.GONE);
         back.setText(LocaleController.getString("ZoomOut", R.string.ZoomOut));
-        zoomIcon = ContextCompat.getDrawable(getContext(), R.drawable.stats_zoom);
+        zoomIcon = ContextCompat.getDrawable(getContext(), R.drawable.msg_zoomout_stats);
         back.setCompoundDrawablesWithIntrinsicBounds(zoomIcon, null, null, null);
         back.setCompoundDrawablePadding(AndroidUtilities.dp(4));
         back.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(4), AndroidUtilities.dp(8), AndroidUtilities.dp(4));

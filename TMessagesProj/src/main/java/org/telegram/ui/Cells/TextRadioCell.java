@@ -16,8 +16,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -97,12 +95,6 @@ public class TextRadioCell extends FrameLayout {
         addView(radioButton, LayoutHelper.createFrame(20, 20, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL, 22, 0, 22, 0));
 
         setClipChildren(false);
-        setTypeface2(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface2(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
-        if (this.valueTextView != null) this.valueTextView.setTypeface(font);
     }
 
     @Override
@@ -272,9 +264,16 @@ public class TextRadioCell extends FrameLayout {
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName("android.widget.RadioButton");
         info.setCheckable(true);
         info.setChecked(radioButton.isChecked());
         info.setContentDescription(radioButton.isChecked() ? LocaleController.getString("NotificationsOn", R.string.NotificationsOn) : LocaleController.getString("NotificationsOff", R.string.NotificationsOff));
+        StringBuilder sb = new StringBuilder();
+        sb.append(textView.getText());
+        if (!TextUtils.isEmpty(valueTextView.getText())) {
+            sb.append("\n");
+            sb.append(valueTextView.getText());
+        }
+        info.setContentDescription(sb);
+        info.setClassName("android.widget.RadioButton");
     }
 }

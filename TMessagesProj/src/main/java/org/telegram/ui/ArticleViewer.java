@@ -102,8 +102,6 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 
 import org.json.JSONObject;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.DownloadController;
@@ -115,6 +113,7 @@ import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
@@ -519,6 +518,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
             sizeBar = new SeekBarView(context);
             sizeBar.setReportChanges(true);
+//            sizeBar.setSeparatorsCount(endFontSize - startFontSize);
             sizeBar.setDelegate(new SeekBarView.SeekBarViewDelegate() {
                 @Override
                 public void onSeekBarDrag(boolean stop, float progress) {
@@ -528,7 +528,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putInt("iv_font_size", SharedConfig.ivFontSize);
-                        editor.commit();
+                        editor.apply();
                         adapter[0].searchTextOffset.clear();
                         updatePaintSize();
                         invalidate();
@@ -1282,14 +1282,14 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     popupWindow.dismiss();
                 }
             });
-            popupLayout.setShownFromBotton(false);
+            popupLayout.setShownFromBottom(false);
 
             deleteView = new TextView(parentActivity);
             deleteView.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector), 2));
             deleteView.setGravity(Gravity.CENTER_VERTICAL);
             deleteView.setPadding(AndroidUtilities.dp(20), 0, AndroidUtilities.dp(20), 0);
             deleteView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-            deleteView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            deleteView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             deleteView.setText(LocaleController.getString("Copy", R.string.Copy).toUpperCase());
             deleteView.setOnClickListener(v -> {
                 if (pressedLinkOwnerLayout != null) {
@@ -1692,7 +1692,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     }
                 };
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setText(LocaleController.getString("InstantViewReference", R.string.InstantViewReference));
                 textView.setGravity((adapter[0].isRtl ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
                 textView.setTextColor(getTextColor());
@@ -2352,10 +2352,10 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         if (paint == null) {
             paint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
             if ((flags & TEXT_FLAG_MONO) != 0) {
-                paint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmono.ttf", "rmono")));
+                paint.setTypeface(AndroidUtilities.getTypeface("fonts/rmono.ttf"));
             } else {
                 if (parentBlock instanceof TLRPC.TL_pageBlockRelatedArticles) {
-                    paint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    paint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 } else if (selectedFont == 1 || parentBlock instanceof TLRPC.TL_pageBlockTitle || parentBlock instanceof TLRPC.TL_pageBlockKicker || parentBlock instanceof TLRPC.TL_pageBlockHeader || parentBlock instanceof TLRPC.TL_pageBlockSubtitle || parentBlock instanceof TLRPC.TL_pageBlockSubheader) {
                     if (parentBlock instanceof TLRPC.TL_pageBlockTitle || parentBlock instanceof TLRPC.TL_pageBlockHeader || parentBlock instanceof TLRPC.TL_pageBlockSubtitle || parentBlock instanceof TLRPC.TL_pageBlockSubheader) {
                         paint.setTypeface(AndroidUtilities.getTypeface("fonts/mw_bold.ttf"));
@@ -2372,11 +2372,11 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     }
                 } else {
                     if ((flags & TEXT_FLAG_MEDIUM) != 0 && (flags & TEXT_FLAG_ITALIC) != 0) {
-                        paint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmediumitalic.ttf", "rmediumitalic")));
+                        paint.setTypeface(AndroidUtilities.getTypeface("fonts/rmediumitalic.ttf"));
                     } else if ((flags & TEXT_FLAG_MEDIUM) != 0) {
-                        paint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        paint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     } else if ((flags & TEXT_FLAG_ITALIC) != 0) {
-                        paint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/ritalic.ttf", "ritalic")));
+                        paint.setTypeface(AndroidUtilities.getTypeface("fonts/ritalic.ttf"));
                     }
                 }
             }
@@ -2451,10 +2451,10 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         } else if (parentBlock instanceof TLRPC.TL_pageBlockChannel) {
             if (channelNamePaint == null) {
                 channelNamePaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                channelNamePaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                channelNamePaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
 
                 channelNamePhotoPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                channelNamePhotoPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                channelNamePhotoPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             }
             channelNamePaint.setColor(getTextColor());
             channelNamePaint.setTextSize(AndroidUtilities.dp(15));
@@ -2468,7 +2468,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
             if (plainText == pageBlockRelatedArticlesChild.parent.articles.get(pageBlockRelatedArticlesChild.num).title) {
                 if (relatedArticleHeaderPaint == null) {
                     relatedArticleHeaderPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-                    relatedArticleHeaderPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    relatedArticleHeaderPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 }
                 relatedArticleHeaderPaint.setColor(getTextColor());
                 relatedArticleHeaderPaint.setTextSize(AndroidUtilities.dp(15) + additionalSize);
@@ -2850,11 +2850,11 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
     }
 
     private void updatePaintFonts() {
-        ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().putInt("font_type", selectedFont).commit();
+        ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().putInt("font_type", selectedFont).apply();
         Typeface typefaceNormal = selectedFont == 0 ? Typeface.DEFAULT : Typeface.SERIF;
-        Typeface typefaceItalic = selectedFont == 0 ? ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/ritalic.ttf", "ritalic")) : Typeface.create("serif", Typeface.ITALIC);
-        Typeface typefaceBold = selectedFont == 0 ? ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")) : Typeface.create("serif", Typeface.BOLD);
-        Typeface typefaceBoldItalic = selectedFont == 0 ? ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmediumitalic.ttf", "rmediumitalic")) : Typeface.create("serif", Typeface.BOLD_ITALIC);
+        Typeface typefaceItalic = selectedFont == 0 ? AndroidUtilities.getTypeface("fonts/ritalic.ttf") : Typeface.create("serif", Typeface.ITALIC);
+        Typeface typefaceBold = selectedFont == 0 ? AndroidUtilities.getTypeface("fonts/rmedium.ttf") : Typeface.create("serif", Typeface.BOLD);
+        Typeface typefaceBoldItalic = selectedFont == 0 ? AndroidUtilities.getTypeface("fonts/rmediumitalic.ttf") : Typeface.create("serif", Typeface.BOLD_ITALIC);
 
         for (int a = 0; a < quoteTextPaints.size(); a++) {
             updateFontEntry(quoteTextPaints.keyAt(a), quoteTextPaints.valueAt(a), typefaceNormal, typefaceBoldItalic, typefaceBold, typefaceItalic);
@@ -3309,7 +3309,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         titleTextView = new SimpleTextView(activity);
         titleTextView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
         titleTextView.setTextSize(20);
-        titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         titleTextView.setTextColor(0xffb3b3b3);
         titleTextView.setPivotX(0.0f);
         titleTextView.setPivotY(AndroidUtilities.dp(28));
@@ -3535,7 +3535,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         menuButton.addSubItem(search_item, R.drawable.msg_search, LocaleController.getString("Search", R.string.Search));
         menuButton.addSubItem(share_item, R.drawable.msg_share, LocaleController.getString("ShareFile", R.string.ShareFile));
         menuButton.addSubItem(open_item, R.drawable.msg_openin, LocaleController.getString("OpenInExternalApp", R.string.OpenInExternalApp));
-        menuButton.addSubItem(settings_item, R.drawable.menu_settings, LocaleController.getString("Settings", R.string.Settings));
+        menuButton.addSubItem(settings_item, R.drawable.msg_settings_old, LocaleController.getString("Settings", R.string.Settings));
         menuButton.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_WHITE_SELECTOR_COLOR));
         menuButton.setContentDescription(LocaleController.getString("AccDescrMoreOptions", R.string.AccDescrMoreOptions));
         menuContainer.addView(menuButton, LayoutHelper.createFrame(48, 56));
@@ -3648,7 +3648,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
         searchCountText = new SimpleTextView(parentActivity);
         searchCountText.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         searchCountText.setTextSize(15);
-        searchCountText.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        searchCountText.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         searchCountText.setGravity(Gravity.LEFT);
         searchPanel.addView(searchCountText, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 18, 0, 108, 0));
 
@@ -4165,7 +4165,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                         }
                         pagesStack.set(0, webPage);
                         if (pagesStack.size() == 1) {
-                            ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().remove("article" + webPage.id).commit();
+                            ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit().remove("article" + webPage.id).apply();
                             updateInterfaceForCurrentPage(webPage, false, 0);
                             if (anchorFinal != null) {
                                 scrollToAnchor(anchorFinal);
@@ -4490,7 +4490,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
             }
             SharedPreferences.Editor editor = ApplicationLoader.applicationContext.getSharedPreferences("articles", Activity.MODE_PRIVATE).edit();
             String key = "article" + adapter[0].currentPage.id;
-            editor.putInt(key, position).putInt(key + "o", offset).putBoolean(key + "r", AndroidUtilities.displaySize.x > AndroidUtilities.displaySize.y).commit();
+            editor.putInt(key, position).putInt(key + "o", offset).putBoolean(key + "r", AndroidUtilities.displaySize.x > AndroidUtilities.displaySize.y).apply();
         }
     }
 
@@ -4848,13 +4848,13 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                 if (photo != null) {
                     TLRPC.PhotoSize sizeFull = FileLoader.getClosestPhotoSizeWithSize(photo.sizes, AndroidUtilities.getPhotoSize());
                     if (sizeFull != null) {
-                        return FileLoader.getPathToAttach(sizeFull, true);
+                        return FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(sizeFull, true);
                     }
                 }
             } else if (block instanceof TLRPC.TL_pageBlockVideo) {
                 TLRPC.Document document = getDocumentWithId(page, ((TLRPC.TL_pageBlockVideo) block).video_id);
                 if (document != null) {
-                    return FileLoader.getPathToAttach(document, true);
+                    return FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(document, true);
                 }
             }
             return null;
@@ -6130,7 +6130,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
                     if (isGif) {
                         autoDownload = DownloadController.getInstance(currentAccount).canDownloadMedia(DownloadController.AUTODOWNLOAD_TYPE_VIDEO, currentDocument.size);
-                        File path = FileLoader.getPathToAttach(currentDocument, true);
+                        File path = FileLoader.getInstance(currentAccount).getPathToAttach(currentDocument, true);
                         if (autoDownload || path.exists()) {
                             imageView.setStrippedLocation(null);
                             imageView.setImage(ImageLocation.getForDocument(currentDocument), ImageLoader.AUTOPLAY_FILTER, null, null, ImageLocation.getForDocument(thumb, currentDocument), "80_80_b", null, currentDocument.size, null, parentAdapter.currentPage, 1);
@@ -6228,7 +6228,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
         public void updateButtonState(boolean animated) {
             String fileName = FileLoader.getAttachFileName(currentDocument);
-            File path = FileLoader.getPathToAttach(currentDocument, true);
+            File path = FileLoader.getInstance(currentAccount).getPathToAttach(currentDocument, true);
             boolean fileExists = path.exists();
             if (TextUtils.isEmpty(fileName)) {
                 radialProgress.setIcon(MediaActionDrawable.ICON_NONE, false, false);
@@ -6518,7 +6518,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                         stringBuilder = new SpannableStringBuilder(author);
                     }
                     if (!TextUtils.isEmpty(author)) {
-                        TypefaceSpan span = new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        TypefaceSpan span = new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                         stringBuilder.setSpan(span, 0, author.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                     }
                     CharSequence stringFinal = TextUtils.ellipsize(stringBuilder, Theme.chat_audioTitlePaint, w, TextUtils.TruncateAt.END);
@@ -6636,7 +6636,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
         public void updateButtonState(boolean animated) {
             String fileName = FileLoader.getAttachFileName(currentDocument);
-            File path = FileLoader.getPathToAttach(currentDocument, true);
+            File path = FileLoader.getInstance(currentAccount).getPathToAttach(currentDocument, true);
             boolean fileExists = path.exists();
             if (TextUtils.isEmpty(fileName)) {
                 radialProgress.setIcon(MediaActionDrawable.ICON_NONE, false, false);
@@ -9872,7 +9872,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
             isFirst = first;
             channelCell.setVisibility(INVISIBLE);
             if (!TextUtils.isEmpty(currentBlock.url)) {
-                linkDrawable = getResources().getDrawable(R.drawable.instant_link);
+                linkDrawable = getResources().getDrawable(R.drawable.msg_instant_link);
             }
             if (currentBlock != null) {
                 TLRPC.Photo photo = parentAdapter.getPhotoWithId(currentBlock.photo_id);
@@ -10008,7 +10008,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
                     currentThumbFilter = "80_80_b";
 
                     autoDownload = (DownloadController.getInstance(currentAccount).getCurrentDownloadMask() & DownloadController.AUTODOWNLOAD_TYPE_PHOTO) != 0;
-                    File path = FileLoader.getPathToAttach(currentPhotoObject, true);
+                    File path = FileLoader.getInstance(currentAccount).getPathToAttach(currentPhotoObject, true);
                     if (autoDownload || path.exists()) {
                         imageView.setStrippedLocation(null);
                         imageView.setImage(ImageLocation.getForPhoto(currentPhotoObject, currentPhoto), currentFilter, ImageLocation.getForPhoto(currentPhotoObjectThumb, currentPhoto), currentThumbFilter, currentPhotoObject.size, null, parentAdapter.currentPage, 1);
@@ -10124,7 +10124,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
         public void updateButtonState(boolean animated) {
             String fileName = FileLoader.getAttachFileName(currentPhotoObject);
-            File path = FileLoader.getPathToAttach(currentPhotoObject, true);
+            File path = FileLoader.getInstance(currentAccount).getPathToAttach(currentPhotoObject, true);
             boolean fileExists = path.exists();
             if (TextUtils.isEmpty(fileName)) {
                 radialProgress.setIcon(MediaActionDrawable.ICON_NONE, false, false);
@@ -10445,7 +10445,7 @@ public class ArticleViewer implements NotificationCenter.NotificationCenterDeleg
 
             textView = new TextView(context);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             textView.setText(LocaleController.getString("ChannelJoin", R.string.ChannelJoin));
             textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
             addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 39, Gravity.RIGHT | Gravity.TOP));

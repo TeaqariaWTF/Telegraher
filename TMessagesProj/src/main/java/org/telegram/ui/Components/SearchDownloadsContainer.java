@@ -3,11 +3,14 @@ package org.telegram.ui.Components;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,8 +24,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
@@ -199,13 +200,13 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
             FileLoader.getInstance(currentAccount).getRecentLoadingFiles(recentLoadingFiles);
 
             for (int i = 0; i < currentLoadingFiles.size(); i++) {
-                if (FileLoader.getPathToMessage(currentLoadingFiles.get(i).messageOwner).exists()) {
+                if (FileLoader.getInstance(currentAccount).getPathToMessage(currentLoadingFiles.get(i).messageOwner).exists()) {
                     moveToRecent.add(currentLoadingFiles.get(i));
                 }
             }
 
             for (int i = 0; i < recentLoadingFiles.size(); i++) {
-                if (!FileLoader.getPathToMessage(recentLoadingFiles.get(i).messageOwner).exists()) {
+                if (!FileLoader.getInstance(currentAccount).getPathToMessage(recentLoadingFiles.get(i).messageOwner).exists()) {
                     removeFromRecent.add(recentLoadingFiles.get(i));
                 }
             }
@@ -474,20 +475,25 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
             if (type == 0) {
                 GraySectionCell graySectionCell = (GraySectionCell) holder.itemView;
                 if (position == downloadingFilesHeader) {
-                    graySectionCell.setText(LocaleController.getString("Downloading", R.string.Downloading), hasCurrentDownload ? LocaleController.getString("PauseAll", R.string.PauseAll) : LocaleController.getString("ResumeAll", R.string.ResumeAll), new OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            for (int i = 0; i < currentLoadingFiles.size(); i++) {
-                                MessageObject messageObject = currentLoadingFiles.get(i);
-                                if (hasCurrentDownload) {
-                                    AccountInstance.getInstance(UserConfig.selectedAccount).getFileLoader().cancelLoadFile(messageObject.getDocument());
-                                } else {
-                                    AccountInstance.getInstance(UserConfig.selectedAccount).getFileLoader().loadFile(messageObject.getDocument(), messageObject, 0, 0);
+                    String header = LocaleController.getString("Downloading", R.string.Downloading);
+                    if (graySectionCell.getText().equals(header)) {
+                        graySectionCell.setRightText(hasCurrentDownload ? LocaleController.getString("PauseAll", R.string.PauseAll) : LocaleController.getString("ResumeAll", R.string.ResumeAll), hasCurrentDownload);
+                    } else {
+                        graySectionCell.setText(header, hasCurrentDownload ? LocaleController.getString("PauseAll", R.string.PauseAll) : LocaleController.getString("ResumeAll", R.string.ResumeAll), new OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                for (int i = 0; i < currentLoadingFiles.size(); i++) {
+                                    MessageObject messageObject = currentLoadingFiles.get(i);
+                                    if (hasCurrentDownload) {
+                                        AccountInstance.getInstance(UserConfig.selectedAccount).getFileLoader().cancelLoadFile(messageObject.getDocument());
+                                    } else {
+                                        AccountInstance.getInstance(UserConfig.selectedAccount).getFileLoader().loadFile(messageObject.getDocument(), messageObject, 0, 0);
+                                    }
                                 }
+                                update(true);
                             }
-                            update(true);
-                        }
-                    });
+                        });
+                    }
                 } else if (position == recentFilesHeader) {
                     graySectionCell.setText(LocaleController.getString("RecentlyDownloaded", R.string.RecentlyDownloaded), LocaleController.getString("Settings", R.string.Settings), new OnClickListener() {
                         @Override
@@ -584,7 +590,7 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
         buttonTextView.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
         buttonTextView.setGravity(Gravity.CENTER);
         buttonTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        buttonTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        buttonTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         buttonTextView.setText(LocaleController.getString("ManageDeviceStorage", R.string.ManageDeviceStorage));
 
         buttonTextView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
@@ -597,7 +603,7 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
         buttonTextView2.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
         buttonTextView2.setGravity(Gravity.CENTER);
         buttonTextView2.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        buttonTextView2.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        buttonTextView2.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         buttonTextView2.setText(LocaleController.getString("ClearDownloadsList", R.string.ClearDownloadsList));
 
         buttonTextView2.setTextColor(Theme.getColor(Theme.key_featuredStickers_addButton));
@@ -609,6 +615,10 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
         scrollView.addView(linearLayout);
         bottomSheet.setCustomView(scrollView);
         bottomSheet.show();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            AndroidUtilities.setLightStatusBar(bottomSheet.getWindow(), !Theme.isCurrentThemeDark());
+            AndroidUtilities.setLightNavigationBar(bottomSheet.getWindow(), !Theme.isCurrentThemeDark());
+        }
 
         buttonTextView.setOnClickListener(view -> {
             bottomSheet.dismiss();
@@ -660,6 +670,12 @@ public class SearchDownloadsContainer extends FrameLayout implements Notificatio
             sharedDocumentCell = new SharedDocumentCell(context, SharedDocumentCell.VIEW_TYPE_GLOBAL_SEARCH);
             sharedDocumentCell.rightDateTextView.setVisibility(View.GONE);
             addView(sharedDocumentCell);
+        }
+
+        @Override
+        public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+            super.onInitializeAccessibilityNodeInfo(info);
+            sharedDocumentCell.onInitializeAccessibilityNodeInfo(info);
         }
     }
 

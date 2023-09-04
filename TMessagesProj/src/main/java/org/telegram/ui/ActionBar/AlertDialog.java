@@ -38,8 +38,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
@@ -489,7 +487,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
             titleTextView.setText(title);
             titleTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
             titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-            titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             titleTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
             titleContainer.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 0, 19, 0, (subtitle != null ? 2 : (items != null ? 14 : 10))));
         }
@@ -575,7 +573,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
             containerView.addView(lineProgressView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 4, Gravity.LEFT | Gravity.CENTER_VERTICAL, 24, 0, 24, 0));
 
             lineProgressViewPercent = new TextView(getContext());
-            lineProgressViewPercent.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            lineProgressViewPercent.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             lineProgressViewPercent.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP);
             lineProgressViewPercent.setTextColor(getThemedColor(Theme.key_dialogTextGray2));
             lineProgressViewPercent.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
@@ -721,10 +719,10 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
                         }
                         if (totalWidth > availableWidth) {
                             View negative = findViewWithTag(BUTTON_NEGATIVE);
-                            View neuntral = findViewWithTag(BUTTON_NEUTRAL);
-                            if (negative != null && neuntral != null) {
-                                if (negative.getMeasuredWidth() < neuntral.getMeasuredWidth()) {
-                                    neuntral.measure(MeasureSpec.makeMeasureSpec(neuntral.getMeasuredWidth() - (totalWidth - availableWidth), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(neuntral.getMeasuredHeight(), MeasureSpec.EXACTLY));
+                            View neutral = findViewWithTag(BUTTON_NEUTRAL);
+                            if (negative != null && neutral != null) {
+                                if (negative.getMeasuredWidth() < neutral.getMeasuredWidth()) {
+                                    neutral.measure(MeasureSpec.makeMeasureSpec(neutral.getMeasuredWidth() - (totalWidth - availableWidth), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(neutral.getMeasuredHeight(), MeasureSpec.EXACTLY));
                                 } else {
                                     negative.measure(MeasureSpec.makeMeasureSpec(negative.getMeasuredWidth() - (totalWidth - availableWidth), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(negative.getMeasuredHeight(), MeasureSpec.EXACTLY));
                                 }
@@ -755,7 +753,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 textView.setTextColor(getThemedColor(dialogButtonColorKey));
                 textView.setGravity(Gravity.CENTER);
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
 //                textView.setLines(1);
 //                textView.setSingleLine(true); //TODO
                 textView.setText(positiveButtonText.toString().toUpperCase());
@@ -795,7 +793,7 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 textView.setTextColor(getThemedColor(dialogButtonColorKey));
                 textView.setGravity(Gravity.CENTER);
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setEllipsize(TextUtils.TruncateAt.END);
                 textView.setSingleLine(true);
                 textView.setText(negativeButtonText.toString().toUpperCase());
@@ -835,11 +833,11 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 textView.setTextColor(getThemedColor(dialogButtonColorKey));
                 textView.setGravity(Gravity.CENTER);
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setEllipsize(TextUtils.TruncateAt.END);
                 textView.setSingleLine(true);
                 textView.setText(neutralButtonText.toString().toUpperCase());
-                textView.setBackgroundDrawable(Theme.getRoundRectSelectorDrawable(getThemedColor(dialogButtonColorKey)));
+                textView.setBackground(Theme.getRoundRectSelectorDrawable(getThemedColor(dialogButtonColorKey)));
                 textView.setPadding(AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10), 0);
                 if (verticalButtons) {
                     buttonsLayout.addView(textView, 1, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, 36, LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT));
@@ -1206,6 +1204,10 @@ public class AlertDialog extends Dialog implements Drawable.Callback {
 
     public ArrayList<ThemeDescription> getThemeDescriptions() {
         return null;
+    }
+
+    public ViewGroup getButtonsLayout() {
+        return buttonsLayout;
     }
 
     public static class Builder {

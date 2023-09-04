@@ -39,10 +39,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Emoji;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.ConnectionsManager;
@@ -883,9 +882,9 @@ public class ViewPagerFixed extends FrameLayout {
         public TabsView(Context context) {
             super(context);
             textCounterPaint.setTextSize(AndroidUtilities.dp(13));
-            textCounterPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textCounterPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             textPaint.setTextSize(AndroidUtilities.dp(15));
-            textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             deletePaint.setStyle(Paint.Style.STROKE);
             deletePaint.setStrokeCap(Paint.Cap.ROUND);
             deletePaint.setStrokeWidth(AndroidUtilities.dp(1.5f));
@@ -931,7 +930,8 @@ public class ViewPagerFixed extends FrameLayout {
                 }
             };
             ((DefaultItemAnimator) listView.getItemAnimator()).setDelayAnimations(false);
-            listView.setSelectorType(7);
+            listView.setSelectorType(8);
+            listView.setSelectorRadius(6);
             listView.setSelectorDrawableColor(Theme.getColor(selectorColorKey));
             listView.setLayoutManager(layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false) {
                 @Override

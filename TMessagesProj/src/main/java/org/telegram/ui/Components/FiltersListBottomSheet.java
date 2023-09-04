@@ -21,11 +21,13 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
@@ -35,9 +37,6 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.DialogsActivity;
 
 import java.util.ArrayList;
-
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class FiltersListBottomSheet extends BottomSheet implements NotificationCenter.NotificationCenterDelegate {
 
@@ -212,7 +211,7 @@ public class FiltersListBottomSheet extends BottomSheet implements NotificationC
         titleTextView.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
         titleTextView.setGravity(Gravity.CENTER_VERTICAL);
         titleTextView.setText(LocaleController.getString("FilterChoose", R.string.FilterChoose));
-        titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         containerView.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 50, Gravity.LEFT | Gravity.TOP, 0, 0, 40, 0));
 
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.emojiLoaded);
@@ -310,7 +309,7 @@ public class FiltersListBottomSheet extends BottomSheet implements NotificationC
         ArrayList<MessagesController.DialogFilter> filters = fragment.getMessagesController().dialogFilters;
         for (int a = 0, N = filters.size(); a < N; a++) {
             MessagesController.DialogFilter filter = filters.get(a);
-            if (!getDialogsCount(fragment, filter, selectedDialogs, true, true).isEmpty()) {
+            if (!getDialogsCount(fragment, filter, selectedDialogs, true, true).isEmpty() && !filter.isDefault()) {
                 result.add(filter);
             }
         }
@@ -394,19 +393,19 @@ public class FiltersListBottomSheet extends BottomSheet implements NotificationC
                 cell.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
                 int icon;
                 if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == (MessagesController.DIALOG_FILTER_FLAG_CONTACTS | MessagesController.DIALOG_FILTER_FLAG_NON_CONTACTS)) {
-                    icon = R.drawable.menu_private;
+                    icon = R.drawable.msg_openprofile;
                 } else if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_EXCLUDE_READ) != 0 && (filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) {
-                    icon = R.drawable.menu_unread;
+                    icon = R.drawable.msg_markunread;
                 } else if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == MessagesController.DIALOG_FILTER_FLAG_CHANNELS) {
-                    icon = R.drawable.menu_broadcast;
+                    icon = R.drawable.msg_channel;
                 } else if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == MessagesController.DIALOG_FILTER_FLAG_GROUPS) {
-                    icon = R.drawable.menu_groups;
+                    icon = R.drawable.msg_groups;
                 } else if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == MessagesController.DIALOG_FILTER_FLAG_CONTACTS) {
-                    icon = R.drawable.menu_contacts;
+                    icon = R.drawable.msg_contacts;
                 } else if ((filter.flags & MessagesController.DIALOG_FILTER_FLAG_ALL_CHATS) == MessagesController.DIALOG_FILTER_FLAG_BOTS) {
-                    icon = R.drawable.menu_bots;
+                    icon = R.drawable.msg_bots;
                 } else {
-                    icon = R.drawable.menu_folders;
+                    icon = R.drawable.msg_folders;
                 }
                 cell.setTextAndIcon(filter.name, icon);
             } else {

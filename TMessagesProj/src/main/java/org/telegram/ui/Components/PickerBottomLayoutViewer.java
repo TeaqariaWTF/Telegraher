@@ -15,8 +15,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -47,7 +45,7 @@ public class PickerBottomLayoutViewer extends FrameLayout {
         cancelButton.setBackgroundDrawable(Theme.createSelectorDrawable(isDarkTheme ? Theme.ACTION_BAR_PICKER_SELECTOR_COLOR : Theme.ACTION_BAR_AUDIO_SELECTOR_COLOR, 0));
         cancelButton.setPadding(AndroidUtilities.dp(20), 0, AndroidUtilities.dp(20), 0);
         cancelButton.setText(LocaleController.getString("Cancel", R.string.Cancel).toUpperCase());
-        cancelButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        cancelButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         addView(cancelButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
 
         doneButton = new TextView(context);
@@ -57,11 +55,11 @@ public class PickerBottomLayoutViewer extends FrameLayout {
         doneButton.setBackgroundDrawable(Theme.createSelectorDrawable(isDarkTheme ? Theme.ACTION_BAR_PICKER_SELECTOR_COLOR : Theme.ACTION_BAR_AUDIO_SELECTOR_COLOR, 0));
         doneButton.setPadding(AndroidUtilities.dp(20), 0, AndroidUtilities.dp(20), 0);
         doneButton.setText(LocaleController.getString("Send", R.string.Send).toUpperCase());
-        doneButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        doneButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         addView(doneButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.RIGHT));
 
         doneButtonBadgeTextView = new TextView(context);
-        doneButtonBadgeTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        doneButtonBadgeTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         doneButtonBadgeTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
         doneButtonBadgeTextView.setTextColor(0xffffffff);
         doneButtonBadgeTextView.setGravity(Gravity.CENTER);

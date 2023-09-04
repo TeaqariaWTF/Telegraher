@@ -19,8 +19,6 @@ import android.os.Build;
 import android.provider.MediaStore;
 import androidx.core.content.FileProvider;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.FileLoader;
@@ -70,7 +68,7 @@ public class WallpaperUpdater {
             icons = null;
         } else {
             items = new CharSequence[]{LocaleController.getString("ChooseTakePhoto", R.string.ChooseTakePhoto), LocaleController.getString("SelectFromGallery", R.string.SelectFromGallery)};
-            icons = new int[]{R.drawable.menu_camera, R.drawable.profile_photos};
+            icons = new int[]{R.drawable.msg_camera, R.drawable.msg_photos};
         }
 
         builder.setItems(items, icons, (dialogInterface, i) -> {

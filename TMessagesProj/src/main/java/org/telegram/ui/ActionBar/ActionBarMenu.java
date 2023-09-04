@@ -14,8 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.Adapters.FiltersView;
 import org.telegram.ui.Components.RLottieDrawable;
@@ -82,6 +80,10 @@ public class ActionBarMenu extends LinearLayout {
 
     public ActionBarMenuItem addItemWithWidth(int id, int icon, int width) {
         return addItem(id, icon, null, isActionMode ? parentActionBar.itemsActionModeBackgroundColor : parentActionBar.itemsBackgroundColor, null, width, null);
+    }
+
+    public ActionBarMenuItem addItemWithWidth(int id, Drawable drawable, int width, CharSequence title) {
+        return addItem(id, 0, null, isActionMode ? parentActionBar.itemsActionModeBackgroundColor : parentActionBar.itemsBackgroundColor, drawable, width, title);
     }
 
     public ActionBarMenuItem addItemWithWidth(int id, int icon, int width, CharSequence title) {
@@ -357,7 +359,7 @@ public class ActionBarMenu extends LinearLayout {
         return false;
     }
 
-    public void translateXItems(int offset) {
+    public void translateXItems(float offset) {
         int count = getChildCount();
         for (int a = 0; a < count; a++) {
             View view = getChildAt(a);

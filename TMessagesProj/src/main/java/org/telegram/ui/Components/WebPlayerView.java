@@ -48,8 +48,6 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Bitmaps;
@@ -777,7 +775,7 @@ public class WebPlayerView extends ViewGroup implements VideoPlayer.VideoPlayerD
                                         JSExtractor extractor = new JSExtractor(jsCode);
                                         functionCode = extractor.extractFunction(functionName);
                                         if (!TextUtils.isEmpty(functionCode) && playerId != null) {
-                                            preferences.edit().putString(playerId, functionCode).putString(playerId + "n", functionName).commit();
+                                            preferences.edit().putString(playerId, functionCode).putString(playerId + "n", functionName).apply();
                                         }
                                     } catch (Exception e) {
                                         FileLog.e(e);

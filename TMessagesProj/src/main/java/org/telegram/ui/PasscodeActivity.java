@@ -50,8 +50,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLog;
@@ -423,6 +421,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 frameLayout.addView(innerLinearLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
                 lockImageView = new RLottieImageView(context);
+                lockImageView.setFocusable(false);
                 lockImageView.setAnimation(R.raw.tsv_setup_intro, 120, 120);
                 lockImageView.setAutoRepeat(false);
                 lockImageView.playAnimation();
@@ -431,7 +430,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
                 titleTextView = new TextView(context);
                 titleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-                titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 if (type == TYPE_SETUP_CODE) {
                     if (SharedConfig.passcodeHash.length() != 0) {
                         titleTextView.setText(LocaleController.getString("EnterNewPasscode", R.string.EnterNewPasscode));

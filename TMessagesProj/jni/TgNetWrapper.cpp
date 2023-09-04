@@ -423,9 +423,17 @@ void init(JNIEnv *env, jclass c, jint instanceNum, jint version, jint layer, jin
 
 void setJava(JNIEnv *env, jclass c, jboolean useJavaByteBuffers) {
     ConnectionsManager::useJavaVM(java, useJavaByteBuffers);
-    for (int a = 0; a < MAX_ACCOUNT_COUNT; a++) {
-        ConnectionsManager::getInstance(a).setDelegate(new Delegate());
+}
+
+void setJava1(JNIEnv *env, jclass c, jint instanceNum) {
+    //problematic code from original multiacc which fuckups all on small increments
+    static std::mutex the_mutexEnv;
+    the_mutexEnv.lock();
+    if (instanceNum >= jniEnv.capacity()) {
+        jniEnv.resize(instanceNum + 128, nullptr);
     }
+    the_mutexEnv.unlock();
+    ConnectionsManager::getInstance(instanceNum).setDelegate(new Delegate());
 }
 
 static const char *ConnectionsManagerClassPathName = "org/telegram/tgnet/ConnectionsManager";
@@ -456,6 +464,7 @@ static JNINativeMethod ConnectionsManagerMethods[] = {
         {"native_setNetworkAvailable", "(IZIZ)V", (void *) setNetworkAvailable},
         {"native_setPushConnectionEnabled", "(IZ)V", (void *) setPushConnectionEnabled},
         {"native_setJava", "(Z)V", (void *) setJava},
+        {"native_setJava", "(I)V", (void *) setJava1},
         {"native_applyDnsConfig", "(IJLjava/lang/String;I)V", (void *) applyDnsConfig},
         {"native_checkProxy", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lorg/telegram/tgnet/RequestTimeDelegate;)J", (void *) checkProxy},
         {"native_onHostNameResolved", "(Ljava/lang/String;JLjava/lang/String;)V", (void *) onHostNameResolved}
@@ -563,7 +572,7 @@ extern "C" int registerNativeTgNetFunctions(JavaVM *vm, JNIEnv *env) {
     if (jclass_ConnectionsManager_onRequestNewServerIpAndPort == 0) {
         return JNI_FALSE;
     }
-    jclass_ConnectionsManager_onProxyError = env->GetStaticMethodID(jclass_ConnectionsManager, "onProxyError", "()V");
+    jclass_ConnectionsManager_onProxyError = env->GetStaticMethodID(jclass_ConnectionsManager, "onProxyError", "(I)V");
     if (jclass_ConnectionsManager_onProxyError == 0) {
         return JNI_FALSE;
     }

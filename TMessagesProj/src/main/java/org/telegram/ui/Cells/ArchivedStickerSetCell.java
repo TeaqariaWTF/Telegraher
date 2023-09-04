@@ -15,7 +15,6 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Typeface;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -27,8 +26,6 @@ import android.widget.Checkable;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.FileLoader;
@@ -83,7 +80,7 @@ public class ArchivedStickerSetCell extends FrameLayout implements Checkable {
             deleteButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_removeButtonText));
             deleteButton.setText(LocaleController.getString("StickersRemove", R.string.StickersRemove));
             deleteButton.setBackground(Theme.getRoundRectSelectorDrawable(Theme.getColor(Theme.key_featuredStickers_removeButtonText)));
-            deleteButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            deleteButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             ViewHelper.setPadding(deleteButton, 8, 0, 8, 0);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 deleteButton.setOutlineProvider(null);
@@ -123,12 +120,6 @@ public class ArchivedStickerSetCell extends FrameLayout implements Checkable {
         imageView.setAspectFit(true);
         imageView.setLayerNum(1);
         addView(imageView, LayoutHelper.createFrameRelatively(48, 48, Gravity.START | Gravity.TOP, 12, 8, 0, 0));
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
-        if (this.valueTextView != null) this.valueTextView.setTypeface(font);
     }
 
     @Override

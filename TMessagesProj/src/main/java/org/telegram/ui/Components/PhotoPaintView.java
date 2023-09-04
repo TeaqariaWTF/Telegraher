@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.*;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -24,15 +25,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.android.gms.vision.Frame;
-import com.google.android.gms.vision.face.Face;
-import com.google.android.gms.vision.face.FaceDetector;
-
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Bitmaps;
-import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.DispatchQueue;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
@@ -40,7 +34,7 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
-import org.telegram.messenger.Utilities;
+import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.VideoEditedInfo;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -48,7 +42,6 @@ import org.telegram.ui.ActionBar.ActionBarPopupWindow;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.BubbleActivity;
-import org.telegram.ui.Components.Paint.PhotoFace;
 import org.telegram.ui.Components.Paint.Views.EntitiesContainerView;
 import org.telegram.ui.Components.Paint.Views.EntityView;
 import org.telegram.ui.Components.Paint.Views.StickerView;
@@ -88,6 +81,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
     private EntitiesContainerView entitiesView;
     private FrameLayout dimView;
     private FrameLayout textDimView;
+    private FrameLayout backgroundView;
     private FrameLayout selectionContainerView;
     private ColorPicker colorPicker;
 
@@ -120,7 +114,6 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
     private Animator colorPickerAnimator;
 
     private DispatchQueue queue;
-    private ArrayList<PhotoFace> faces;
 
     private boolean ignoreLayout;
 
@@ -220,6 +213,13 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         textDimView.setVisibility(GONE);
         textDimView.setOnClickListener(v -> closeTextEnter(true));
 
+        backgroundView = new FrameLayout(context);
+//        backgroundView.setBackgroundColor(0x7f000000);
+        Drawable backgroundDrawable = getResources().getDrawable(R.drawable.gradient_bottom).mutate();
+        backgroundDrawable.setColorFilter(new PorterDuffColorFilter(0xff000000, PorterDuff.Mode.MULTIPLY));
+        backgroundView.setBackground(backgroundDrawable);
+        addView(backgroundView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 72, Gravity.FILL_HORIZONTAL | Gravity.BOTTOM));
+
         selectionContainerView = new FrameLayout(context) {
             @Override
             public boolean onTouchEvent(MotionEvent event) {
@@ -282,7 +282,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         cancelTextView.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_PICKER_SELECTOR_COLOR, 0));
         cancelTextView.setPadding(AndroidUtilities.dp(20), 0, AndroidUtilities.dp(20), 0);
         cancelTextView.setText(LocaleController.getString("Cancel", R.string.Cancel).toUpperCase());
-        cancelTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        cancelTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         toolsView.addView(cancelTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
 
         doneTextView = new TextView(context);
@@ -292,26 +292,28 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         doneTextView.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_PICKER_SELECTOR_COLOR, 0));
         doneTextView.setPadding(AndroidUtilities.dp(20), 0, AndroidUtilities.dp(20), 0);
         doneTextView.setText(LocaleController.getString("Done", R.string.Done).toUpperCase());
-        doneTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        doneTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         toolsView.addView(doneTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.RIGHT));
 
         paintButton = new ImageView(context);
         paintButton.setScaleType(ImageView.ScaleType.CENTER);
-        paintButton.setImageResource(R.drawable.photo_paint);
+        paintButton.setContentDescription(LocaleController.getString("AccDescrPaint", R.string.AccDescrPaint));
+        paintButton.setImageResource(R.drawable.msg_photo_draw);
         paintButton.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_WHITE_SELECTOR_COLOR));
         toolsView.addView(paintButton, LayoutHelper.createFrame(54, LayoutHelper.MATCH_PARENT, Gravity.CENTER, 0, 0, 56, 0));
         paintButton.setOnClickListener(v -> selectEntity(null));
 
         ImageView stickerButton = new ImageView(context);
         stickerButton.setScaleType(ImageView.ScaleType.CENTER);
-        stickerButton.setImageResource(R.drawable.photo_sticker);
+        stickerButton.setImageResource(R.drawable.msg_sticker);
         stickerButton.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_WHITE_SELECTOR_COLOR));
         toolsView.addView(stickerButton, LayoutHelper.createFrame(54, LayoutHelper.MATCH_PARENT, Gravity.CENTER));
         stickerButton.setOnClickListener(v -> openStickersView());
 
         ImageView textButton = new ImageView(context);
         textButton.setScaleType(ImageView.ScaleType.CENTER);
-        textButton.setImageResource(R.drawable.photo_paint_text);
+        textButton.setContentDescription(LocaleController.getString("AccDescrPlaceText", R.string.AccDescrPlaceText));
+        textButton.setImageResource(R.drawable.msg_photo_text);
         textButton.setBackgroundDrawable(Theme.createSelectorDrawable(Theme.ACTION_BAR_WHITE_SELECTOR_COLOR));
         toolsView.addView(textButton, LayoutHelper.createFrame(54, LayoutHelper.MATCH_PARENT, Gravity.CENTER, 56, 0, 0, 0));
         textButton.setOnClickListener(v -> createText(true));
@@ -408,13 +410,16 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
 
     private void updateSettingsButton() {
         int resource = R.drawable.photo_paint_brush;
+        colorPicker.settingsButton.setContentDescription(LocaleController.getString("AccDescrBrushType", R.string.AccDescrBrushType));
         if (currentEntityView != null) {
             if (currentEntityView instanceof StickerView) {
-                resource = R.drawable.photo_flip;
+                resource = R.drawable.msg_photo_flip;
+                colorPicker.settingsButton.setContentDescription(LocaleController.getString("AccDescrMirror", R.string.AccDescrMirror));
             } else if (currentEntityView instanceof TextPaintView) {
                 resource = R.drawable.photo_outline;
+                colorPicker.settingsButton.setContentDescription(LocaleController.getString("PaintOutlined", R.string.PaintOutlined));
             }
-            paintButton.setImageResource(R.drawable.photo_paint);
+            paintButton.setImageResource(R.drawable.msg_photo_draw);
             paintButton.setColorFilter(null);
         } else {
             if (brushSwatch != null) {
@@ -422,8 +427,9 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
                 brushSwatch = null;
             }
             paintButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_dialogFloatingButton), PorterDuff.Mode.MULTIPLY));
-            paintButton.setImageResource(R.drawable.photo_paint);
+            paintButton.setImageResource(R.drawable.msg_photo_draw);
         }
+        backgroundView.setVisibility(currentEntityView instanceof TextPaintView ? View.INVISIBLE : View.VISIBLE);
 
         colorPicker.setSettingsButtonImage(resource);
     }
@@ -440,9 +446,6 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
     public void init() {
         entitiesView.setVisibility(VISIBLE);
         renderView.setVisibility(View.VISIBLE);
-        if (facesBitmap != null) {
-            detectFaces();
-        }
     }
 
     public void shutdown() {
@@ -460,6 +463,10 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
 
     public FrameLayout getToolsView() {
         return toolsView;
+    }
+
+    public FrameLayout getColorPickerBackground() {
+        return backgroundView;
     }
 
     public FrameLayout getCurtainView() {
@@ -520,7 +527,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
                         mediaEntity.document = stickerView.getSticker();
                         mediaEntity.parentObject = stickerView.getParentObject();
                         TLRPC.Document document = stickerView.getSticker();
-                        mediaEntity.text = FileLoader.getPathToAttach(document, true).getAbsolutePath();
+                        mediaEntity.text = FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(document, true).getAbsolutePath();
                         if (MessageObject.isAnimatedStickerDocument(document, true) || MessageObject.isVideoStickerDocument(document)) {
                             boolean isAnimatedSticker = MessageObject.isAnimatedStickerDocument(document, true);
                             mediaEntity.subType |=  isAnimatedSticker ? 1 : 4;
@@ -735,6 +742,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         colorPicker.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY));
         toolsView.measure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(48), MeasureSpec.EXACTLY));
         curtainView.measure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY));
+        backgroundView.measure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(72), MeasureSpec.EXACTLY));
         ignoreLayout = false;
     }
 
@@ -761,6 +769,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         colorPicker.layout(0, actionBarHeight2, colorPicker.getMeasuredWidth(), actionBarHeight2 + colorPicker.getMeasuredHeight());
         toolsView.layout(0, height - toolsView.getMeasuredHeight(), toolsView.getMeasuredWidth(), height);
         curtainView.layout(0, y, curtainView.getMeasuredWidth(), y + curtainView.getMeasuredHeight());
+        backgroundView.layout(0, height - AndroidUtilities.dp(45) - backgroundView.getMeasuredHeight(), backgroundView.getMeasuredWidth(), height - AndroidUtilities.dp(45));
     }
 
     @Override
@@ -962,8 +971,12 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
                 tx = trX;
                 ty = trY;
             }
-            view.setScaleX(scale * additionlScale);
-            view.setScaleY(scale * additionlScale);
+            float finalScale = scale * additionlScale;
+            if (Float.isNaN(finalScale)) {
+                finalScale = 1f;
+            }
+            view.setScaleX(finalScale);
+            view.setScaleY(finalScale);
             view.setTranslationX(tx);
             view.setTranslationY(ty);
             view.setRotation(rotation);
@@ -1458,7 +1471,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
                     popupWindow.dismiss();
                 }
             });
-            popupLayout.setShownFromBotton(true);
+            popupLayout.setShownFromBottom(true);
         }
 
         popupLayout.removeInnerViews();
@@ -1488,74 +1501,6 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
         popupWindow.startAnimation();
     }
 
-    private int getFrameRotation() {
-        switch (originalBitmapRotation) {
-            case 90: {
-                return Frame.ROTATION_90;
-            }
-
-            case 180: {
-                return Frame.ROTATION_180;
-            }
-
-            case 270: {
-                return Frame.ROTATION_270;
-            }
-
-            default: {
-                return Frame.ROTATION_0;
-            }
-        }
-    }
-
-    private boolean isSidewardOrientation() {
-        return originalBitmapRotation % 360 == 90 || originalBitmapRotation % 360 == 270;
-    }
-
-    private void detectFaces() {
-        queue.postRunnable(() -> {
-            FaceDetector faceDetector = null;
-            try {
-                faceDetector = new FaceDetector.Builder(getContext())
-                        .setMode(FaceDetector.ACCURATE_MODE)
-                        .setLandmarkType(FaceDetector.ALL_LANDMARKS)
-                        .setTrackingEnabled(false).build();
-                if (!faceDetector.isOperational()) {
-                    if (BuildVars.LOGS_ENABLED) {
-                        FileLog.e("face detection is not operational");
-                    }
-                    return;
-                }
-
-                Frame frame = new Frame.Builder().setBitmap(facesBitmap).setRotation(getFrameRotation()).build();
-                SparseArray<Face> faces;
-                try {
-                    faces = faceDetector.detect(frame);
-                } catch (Throwable e) {
-                    FileLog.e(e);
-                    return;
-                }
-                ArrayList<PhotoFace> result = new ArrayList<>();
-                Size targetSize = getPaintingSize();
-                for (int i = 0; i < faces.size(); i++) {
-                    int key = faces.keyAt(i);
-                    Face f = faces.get(key);
-                    PhotoFace face = new PhotoFace(f, facesBitmap, targetSize, isSidewardOrientation());
-                    if (face.isSufficient()) {
-                        result.add(face);
-                    }
-                }
-                PhotoPaintView.this.faces = result;
-            } catch (Exception e) {
-                FileLog.e(e);
-            } finally {
-                if (faceDetector != null) {
-                    faceDetector.release();
-                }
-            }
-        });
-    }
-
     private StickerPosition calculateStickerPosition(TLRPC.Document document) {
         TLRPC.TL_maskCoords maskCoords = null;
 
@@ -1577,84 +1522,7 @@ public class PhotoPaintView extends FrameLayout implements EntityView.EntityView
             baseScale = 0.75f;
         }
         StickerPosition defaultPosition = new StickerPosition(centerPositionForEntity(), baseScale, rotation);
-        if (maskCoords == null || faces == null || faces.size() == 0) {
-            return defaultPosition;
-        } else {
-            int anchor = maskCoords.n;
-
-            PhotoFace face = getRandomFaceWithVacantAnchor(anchor, document.id, maskCoords);
-            if (face == null) {
-                return defaultPosition;
-            }
-
-            Point referencePoint = face.getPointForAnchor(anchor);
-            float referenceWidth = face.getWidthForAnchor(anchor);
-            float angle = face.getAngle();
-            Size baseSize = baseStickerSize();
-
-            float scale = (float) (referenceWidth / baseSize.width * maskCoords.zoom);
-
-            float radAngle = (float) Math.toRadians(angle);
-            float xCompX = (float) (Math.sin(Math.PI / 2.0f - radAngle) * referenceWidth * maskCoords.x);
-            float xCompY = (float) (Math.cos(Math.PI / 2.0f - radAngle) * referenceWidth * maskCoords.x);
-
-            float yCompX = (float) (Math.cos(Math.PI / 2.0f + radAngle) * referenceWidth * maskCoords.y);
-            float yCompY = (float) (Math.sin(Math.PI / 2.0f + radAngle) * referenceWidth * maskCoords.y);
-
-            float x = referencePoint.x + xCompX + yCompX;
-            float y = referencePoint.y + xCompY + yCompY;
-
-            return new StickerPosition(new Point(x, y), scale, angle);
-        }
-    }
-
-    private PhotoFace getRandomFaceWithVacantAnchor(int anchor, long documentId, TLRPC.TL_maskCoords maskCoords) {
-        if (anchor < 0 || anchor > 3 || faces.isEmpty()) {
-            return null;
-        }
-
-        int count = faces.size();
-        int randomIndex = Utilities.random.nextInt(count);
-        int remaining = count;
-
-        PhotoFace selectedFace = null;
-        for (int i = randomIndex; remaining > 0; i = (i + 1) % count, remaining--) {
-            PhotoFace face = faces.get(i);
-            if (!isFaceAnchorOccupied(face, anchor, documentId, maskCoords)) {
-                return face;
-            }
-        }
-
-        return selectedFace;
-    }
-
-    private boolean isFaceAnchorOccupied(PhotoFace face, int anchor, long documentId, TLRPC.TL_maskCoords maskCoords) {
-        Point anchorPoint = face.getPointForAnchor(anchor);
-        if (anchorPoint == null) {
-            return true;
-        }
-
-        float minDistance = face.getWidthForAnchor(0) * 1.1f;
-
-        for (int index = 0; index < entitiesView.getChildCount(); index++) {
-            View view = entitiesView.getChildAt(index);
-            if (!(view instanceof StickerView)) {
-                continue;
-            }
-
-            StickerView stickerView = (StickerView) view;
-            if (stickerView.getAnchor() != anchor) {
-                continue;
-            }
-
-            Point location = stickerView.getPosition();
-            float distance = (float)Math.hypot(location.x - anchorPoint.x, location.y - anchorPoint.y);
-            if ((documentId == stickerView.getSticker().id || faces.size() > 1) && distance < minDistance) {
-                return true;
-            }
-        }
-
-        return false;
+        return defaultPosition;
     }
 
     private int getThemedColor(String key) {

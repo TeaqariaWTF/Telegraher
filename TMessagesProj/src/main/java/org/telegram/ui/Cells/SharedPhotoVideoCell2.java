@@ -18,14 +18,13 @@ import android.view.View;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.Theme;
@@ -441,13 +440,13 @@ public class SharedPhotoVideoCell2 extends View {
         Paint highlightPaint = new Paint();
         SparseArray<String> imageFilters = new SparseArray<>();
 
-        public SharedResources(Context context) {
+        public SharedResources(Context context, Theme.ResourcesProvider resourcesProvider) {
             textPaint.setTextSize(AndroidUtilities.dp(12));
             textPaint.setColor(Color.WHITE);
-            textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             playDrawable = ContextCompat.getDrawable(context, R.drawable.play_mini_video);
             playDrawable.setBounds(0, 0, playDrawable.getIntrinsicWidth(), playDrawable.getIntrinsicHeight());
-            backgroundPaint.setColor(Theme.getColor(Theme.key_sharedMedia_photoPlaceholder));
+            backgroundPaint.setColor(Theme.getColor(Theme.key_sharedMedia_photoPlaceholder, resourcesProvider));
         }
 
         public String getFilterString(int width) {

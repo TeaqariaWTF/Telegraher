@@ -58,8 +58,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
@@ -73,10 +71,10 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
@@ -367,11 +365,6 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
     public void setInitialModes(boolean blur, boolean motion) {
         isBlurred = blur;
         isMotion = motion;
-    }
-
-    @Override
-    public int getNavigationBarColor() {
-        return super.getNavigationBarColor();
     }
 
     @SuppressLint("Recycle")
@@ -803,7 +796,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                 dropDown.setMaxLines(1);
                 dropDown.setEllipsize(TextUtils.TruncateAt.END);
                 dropDown.setTextColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
-                dropDown.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                dropDown.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 dropDown.setText(LocaleController.getString("ColorPickerMainColor", R.string.ColorPickerMainColor));
                 Drawable dropDownDrawable = context.getResources().getDrawable(R.drawable.ic_arrow_drop_down).mutate();
                 dropDownDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultTitle), PorterDuff.Mode.MULTIPLY));
@@ -821,7 +814,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                 if (applyingTheme.info != null && applyingTheme.info.installs_count > 0) {
                     actionBar2.setSubtitle(LocaleController.formatPluralString("ThemeInstallCount", applyingTheme.info.installs_count));
                 } else {
-                    actionBar2.setSubtitle(LocaleController.formatDateOnline(System.currentTimeMillis() / 1000 - 60 * 60));
+                    actionBar2.setSubtitle(LocaleController.formatDateOnline(System.currentTimeMillis() / 1000 - 60 * 60, null));
                 }
             }
         }
@@ -1086,7 +1079,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
                         if (!done) {
                             TLRPC.TL_wallPaper wallPaper = (TLRPC.TL_wallPaper) currentWallpaper;
-                            File f = FileLoader.getPathToAttach(wallPaper.document, true);
+                            File f = FileLoader.getInstance(currentAccount).getPathToAttach(wallPaper.document, true);
                             try {
                                 done = AndroidUtilities.copyFile(f, toFile);
                             } catch (Exception e) {
@@ -1153,7 +1146,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                         File f;
                         if (wallpaper.photo != null) {
                             TLRPC.PhotoSize image = FileLoader.getClosestPhotoSizeWithSize(wallpaper.photo.sizes, maxWallpaperSize, true);
-                            f = FileLoader.getPathToAttach(image, true);
+                            f = FileLoader.getInstance(currentAccount).getPathToAttach(image, true);
                         } else {
                             f = ImageLoader.getHttpFilePath(wallpaper.imageUrl, "jpg");
                         }
@@ -1214,7 +1207,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                         MediaController.SearchImage wallPaper = (MediaController.SearchImage) currentWallpaper;
                         if (wallPaper.photo != null) {
                             TLRPC.PhotoSize image = FileLoader.getClosestPhotoSizeWithSize(wallPaper.photo.sizes, maxWallpaperSize, true);
-                            path = FileLoader.getPathToAttach(image, true);
+                            path = FileLoader.getInstance(currentAccount).getPathToAttach(image, true);
                         } else {
                             path = ImageLoader.getHttpFilePath(wallPaper.imageUrl, "jpg");
                         }
@@ -1276,7 +1269,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
                 bottomOverlayChatText = new TextView(context);
                 bottomOverlayChatText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                bottomOverlayChatText.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                bottomOverlayChatText.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 bottomOverlayChatText.setTextColor(Theme.getColor(Theme.key_chat_fieldOverlayText));
                 bottomOverlayChatText.setText(LocaleController.getString("SetBackground", R.string.SetBackground));
                 bottomOverlayChat.addView(bottomOverlayChatText, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
@@ -1289,7 +1282,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
             TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
             textPaint.setTextSize(AndroidUtilities.dp(14));
-            textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             {
                 int textsCount;
                 if (screenType == SCREEN_TYPE_ACCENT_COLOR || currentWallpaper instanceof WallpapersListActivity.ColorWallpaper) {
@@ -1633,7 +1626,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
                         patternsCancelButton[a] = new TextView(context);
                         patternsCancelButton[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                        patternsCancelButton[a].setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        patternsCancelButton[a].setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                         patternsCancelButton[a].setTextColor(Theme.getColor(Theme.key_chat_fieldOverlayText));
                         patternsCancelButton[a].setText(LocaleController.getString("Cancel", R.string.Cancel).toUpperCase());
                         patternsCancelButton[a].setGravity(Gravity.CENTER);
@@ -1682,7 +1675,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
                         patternsSaveButton[a] = new TextView(context);
                         patternsSaveButton[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-                        patternsSaveButton[a].setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        patternsSaveButton[a].setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                         patternsSaveButton[a].setTextColor(Theme.getColor(Theme.key_chat_fieldOverlayText));
                         patternsSaveButton[a].setText(LocaleController.getString("ApplyTheme", R.string.ApplyTheme).toUpperCase());
                         patternsSaveButton[a].setGravity(Gravity.CENTER);
@@ -1709,7 +1702,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
 
                         titleView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-                        titleView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                        titleView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                         titleView.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(6), AndroidUtilities.dp(21), AndroidUtilities.dp(8));
 
                         titleView.setEllipsize(TextUtils.TruncateAt.MIDDLE);
@@ -2037,7 +2030,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
             cancelButton.setBackgroundDrawable(Theme.createSelectorDrawable(0x0f000000, 0));
             cancelButton.setPadding(AndroidUtilities.dp(29), 0, AndroidUtilities.dp(29), 0);
             cancelButton.setText(LocaleController.getString("Cancel", R.string.Cancel).toUpperCase());
-            cancelButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            cancelButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             saveButtonsContainer.addView(cancelButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
             cancelButton.setOnClickListener(v -> cancelThemeApply(false));
 
@@ -2048,7 +2041,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
             doneButton.setBackgroundDrawable(Theme.createSelectorDrawable(0x0f000000, 0));
             doneButton.setPadding(AndroidUtilities.dp(29), 0, AndroidUtilities.dp(29), 0);
             doneButton.setText(LocaleController.getString("ApplyTheme", R.string.ApplyTheme).toUpperCase());
-            doneButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            doneButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             saveButtonsContainer.addView(doneButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.RIGHT));
             doneButton.setOnClickListener(v -> {
                 Theme.ThemeInfo previousTheme = Theme.getPreviousTheme();
@@ -2073,7 +2066,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                     MessagesController.getInstance(applyingTheme.account).saveTheme(applyingTheme, null, false, false);
                     SharedPreferences.Editor editor = ApplicationLoader.applicationContext.getSharedPreferences("themeconfig", Activity.MODE_PRIVATE).edit();
                     editor.putString("lastDayTheme", applyingTheme.getKey());
-                    editor.commit();
+                    editor.apply();
                 }
                 finishFragment();
                 if (screenType == SCREEN_TYPE_PREVIEW) {
@@ -2517,14 +2510,10 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
             Theme.setChangingWallpaper(true);
         }
         if (screenType != SCREEN_TYPE_PREVIEW || accent != null) {
-            if (SharedConfig.getDevicePerformanceClass() == SharedConfig.PERFORMANCE_CLASS_LOW) {
-                int w = Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
-                int h = Math.max(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
-                imageFilter = (int) (w / AndroidUtilities.density) + "_" + (int) (h / AndroidUtilities.density) + "_f";
-            } else {
-                imageFilter = (int) (1080 / AndroidUtilities.density) + "_" + (int) (1920 / AndroidUtilities.density) + "_f";
-            }
-            maxWallpaperSize = Math.min(1920, Math.max(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y));
+            int w = Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
+            int h = Math.max(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
+            imageFilter = (int) (w / AndroidUtilities.density) + "_" + (int) (h / AndroidUtilities.density) + "_f";
+            maxWallpaperSize = Math.max(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
 
             NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.wallpapersNeedReload);
             NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.wallpapersDidLoad);
@@ -3026,7 +3015,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
             }
             boolean fileExists;
             File path;
-            int size;
+            long size;
             String fileName;
             if (object instanceof TLRPC.TL_wallPaper) {
                 TLRPC.TL_wallPaper wallPaper = (TLRPC.TL_wallPaper) object;
@@ -3034,13 +3023,13 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                 if (TextUtils.isEmpty(fileName)) {
                     return;
                 }
-                path = FileLoader.getPathToAttach(wallPaper.document, true);
+                path = FileLoader.getInstance(currentAccount).getPathToAttach(wallPaper.document, true);
                 size = wallPaper.document.size;
             } else {
                 MediaController.SearchImage wallPaper = (MediaController.SearchImage) object;
                 if (wallPaper.photo != null) {
                     TLRPC.PhotoSize photoSize = FileLoader.getClosestPhotoSizeWithSize(wallPaper.photo.sizes, maxWallpaperSize, true);
-                    path = FileLoader.getPathToAttach(photoSize, true);
+                    path = FileLoader.getInstance(currentAccount).getPathToAttach(photoSize, true);
                     fileName = FileLoader.getAttachFileName(photoSize);
                     size = photoSize.size;
                 } else {
@@ -3145,7 +3134,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
             if (colorType != 3) {
                 return;
             }
-            preferences.edit().putBoolean("bganimationhint", true).commit();
+            preferences.edit().putBoolean("bganimationhint", true).apply();
             animationHint.showForView(messagesCheckBoxView[0], true);
         }, 500);
     }
@@ -3588,7 +3577,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
         }
         if (!Theme.hasThemeKey(Theme.key_chat_serviceBackground) || backgroundImage.getBackground() instanceof MotionBackgroundDrawable) {
             Theme.applyChatServiceMessageColor(new int[]{checkColor, checkColor, checkColor, checkColor}, backgroundImage.getBackground());
-        } else if (Theme.getCachedWallpaper() instanceof MotionBackgroundDrawable) {
+        } else if (Theme.getCachedWallpaperNonBlocking() instanceof MotionBackgroundDrawable) {
             int c = Theme.getColor(Theme.key_chat_serviceBackground);
             Theme.applyChatServiceMessageColor(new int[]{c, c, c, c}, backgroundImage.getBackground());
         }
@@ -3768,7 +3757,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                     backgroundImage.setImage(ImageLocation.getForDocument(selectedPattern.document), imageFilter, null, null, "jpg", selectedPattern.document.size, 1, selectedPattern);
                 }
             } else {
-                Drawable backgroundDrawable = Theme.getCachedWallpaper();
+                Drawable backgroundDrawable = Theme.getCachedWallpaperNonBlocking();
                 if (backgroundDrawable != null) {
                     if (backgroundDrawable instanceof MotionBackgroundDrawable) {
                         ((MotionBackgroundDrawable) backgroundDrawable).setParentView(backgroundImage);

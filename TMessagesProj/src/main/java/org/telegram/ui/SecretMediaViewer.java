@@ -46,8 +46,6 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.ImageReceiver;
@@ -95,6 +93,19 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
         @Override
         protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
             return child != aspectRatioFrameLayout && super.drawChild(canvas, child, drawingTime);
+        }
+
+
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            centerImage.onAttachedToWindow();
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            centerImage.onDetachedFromWindow();
         }
     }
 
@@ -794,7 +805,7 @@ public class SecretMediaViewer implements NotificationCenter.NotificationCenterD
                 if (f.exists()) {
                     preparePlayer(f);
                 } else {
-                    File file = FileLoader.getPathToMessage(messageObject.messageOwner);
+                    File file = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner);
                     File encryptedFile = new File(file.getAbsolutePath() + ".enc");
                     if (encryptedFile.exists()) {
                         file = encryptedFile;

@@ -19,8 +19,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Bitmaps;
 import org.telegram.messenger.ImageLoader;
@@ -443,7 +441,7 @@ public class PhotoCropActivity extends BaseFragment {
         });
 
         ActionBarMenu menu = actionBar.createMenu();
-        menu.addItemWithWidth(done_button, R.drawable.ic_done, AndroidUtilities.dp(56), LocaleController.getString("Done", R.string.Done));
+        menu.addItemWithWidth(done_button, R.drawable.ic_ab_done, AndroidUtilities.dp(56), LocaleController.getString("Done", R.string.Done));
 
         fragmentView = view = new PhotoCropView(context);
         ((PhotoCropView) fragmentView).freeform = getArguments().getBoolean("freeform", false);

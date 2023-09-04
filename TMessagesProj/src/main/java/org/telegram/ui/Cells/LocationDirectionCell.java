@@ -4,8 +4,6 @@ import android.content.Context;
 import android.view.Gravity;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -25,7 +23,7 @@ public class LocationDirectionCell extends FrameLayout {
         this.resourcesProvider = resourcesProvider;
 
         frameLayout = new FrameLayout(context);
-        frameLayout.setBackgroundDrawable(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), getThemedColor(Theme.key_featuredStickers_addButton), getThemedColor(Theme.key_featuredStickers_addButtonPressed)));
+        frameLayout.setBackground(Theme.AdaptiveRipple.filledRect(getThemedColor(Theme.key_featuredStickers_addButton), 4));
         addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.LEFT | Gravity.TOP, 16, 10, 16, 0));
 
         buttonTextView = new SimpleTextView(context);
@@ -36,7 +34,7 @@ public class LocationDirectionCell extends FrameLayout {
         buttonTextView.setTextSize(14);
         buttonTextView.setText(LocaleController.getString("Directions", R.string.Directions));
         buttonTextView.setLeftDrawable(R.drawable.navigate);
-        buttonTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        buttonTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         frameLayout.addView(buttonTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
     }
 

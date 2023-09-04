@@ -38,8 +38,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Keep;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
@@ -48,6 +46,7 @@ import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
@@ -87,7 +86,7 @@ public class UndoView extends FrameLayout {
     private String timeLeftString;
     private int textWidth;
 
-    private int currentAction;
+    private int currentAction = -1;
     private ArrayList<Long> currentDialogIds;
     private Runnable currentActionRunnable;
     private Runnable currentCancelRunnable;
@@ -285,7 +284,7 @@ public class UndoView extends FrameLayout {
 
         undoTextView = new TextView(context);
         undoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        undoTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        undoTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         undoTextView.setTextColor(getThemedColor(Theme.key_undo_cancelColor));
         undoTextView.setText(LocaleController.getString("Undo", R.string.Undo));
         undoButton.addView(undoTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.LEFT, 6, 4, 8, 4));
@@ -300,7 +299,7 @@ public class UndoView extends FrameLayout {
 
         textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextSize(AndroidUtilities.dp(12));
-        textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textPaint.setColor(getThemedColor(Theme.key_undo_infoColor));
 
         setWillNotDraw(false);
@@ -439,7 +438,7 @@ public class UndoView extends FrameLayout {
     }
 
     public void showWithAction(ArrayList<Long> dialogIds, int action, Object infoObject, Object infoObject2, Runnable actionRunnable, Runnable cancelRunnable) {
-        if (!AndroidUtilities.shouldShowClipboardToast() && currentAction == ACTION_MESSAGE_COPIED || currentAction == ACTION_USERNAME_COPIED || currentAction == ACTION_HASHTAG_COPIED || currentAction == ACTION_TEXT_COPIED || currentAction == ACTION_LINK_COPIED || currentAction == ACTION_PHONE_COPIED || currentAction == ACTION_EMAIL_COPIED || currentAction == ACTION_VOIP_LINK_COPIED) {
+        if (!AndroidUtilities.shouldShowClipboardToast() && (currentAction == ACTION_MESSAGE_COPIED || currentAction == ACTION_USERNAME_COPIED || currentAction == ACTION_HASHTAG_COPIED || currentAction == ACTION_TEXT_COPIED || currentAction == ACTION_LINK_COPIED || currentAction == ACTION_PHONE_COPIED || currentAction == ACTION_EMAIL_COPIED || currentAction == ACTION_VOIP_LINK_COPIED)) {
             return;
         }
         if (currentActionRunnable != null) {
@@ -837,6 +836,9 @@ public class UndoView extends FrameLayout {
                 }
                 subInfoText = null;
                 icon = currentAction == ACTION_PIN_DIALOGS ? R.raw.ic_pin :  R.raw.ic_unpin;
+                if (infoObject2 instanceof Integer) {
+                    timeLeft = (int) infoObject2;
+                }
             } else {
                 if (action == ACTION_ARCHIVE_HINT) {
                     infoText = LocaleController.getString("ChatArchived", R.string.ChatArchived);
@@ -879,7 +881,7 @@ public class UndoView extends FrameLayout {
                 subinfoTextView.setText(subInfoText);
                 subinfoTextView.setVisibility(VISIBLE);
                 infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-                infoTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                infoTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             } else {
                 layoutParams.leftMargin = AndroidUtilities.dp(58);
                 layoutParams.topMargin = AndroidUtilities.dp(13);
@@ -1097,7 +1099,7 @@ public class UndoView extends FrameLayout {
             leftImageView.setVisibility(VISIBLE);
 
             if (radius != 0) {
-                infoTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                infoTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 leftImageView.clearLayerColors();
                 leftImageView.setLayerColor("BODY.**", getThemedColor(Theme.key_undo_infoColor));
@@ -1153,7 +1155,7 @@ public class UndoView extends FrameLayout {
             subinfoTextView.setText(authorization.app_name);
             subinfoTextView.setVisibility(VISIBLE);
             infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            infoTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            infoTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
 
             undoTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteRedText2));
             undoImageView.setVisibility(GONE);

@@ -14,8 +14,6 @@ import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 public class PhotoEditorSeekBar extends View {

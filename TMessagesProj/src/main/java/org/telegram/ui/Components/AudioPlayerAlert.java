@@ -55,8 +55,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.exoplayer2.C;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildConfig;
@@ -72,6 +70,7 @@ import org.telegram.messenger.ImageReceiver;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
@@ -230,6 +229,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
 
     public AudioPlayerAlert(final Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context, true, resourcesProvider);
+        fixNavigationBar();
 
         MessageObject messageObject = MediaController.getInstance().getPlayingMessageObject();
         if (messageObject != null) {
@@ -569,7 +569,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                 final TextView textView = new TextView(context);
                 textView.setTextColor(getThemedColor(Theme.key_player_actionBarTitle));
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
-                textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                 textView.setEllipsize(TextUtils.TruncateAt.END);
                 textView.setSingleLine(true);
                 return textView;
@@ -1080,7 +1080,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         emptyTitleTextView.setTextColor(getThemedColor(Theme.key_dialogEmptyText));
         emptyTitleTextView.setGravity(Gravity.CENTER);
         emptyTitleTextView.setText(LocaleController.getString("NoAudioFound", R.string.NoAudioFound));
-        emptyTitleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        emptyTitleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         emptyTitleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
         emptyTitleTextView.setPadding(AndroidUtilities.dp(40), 0, AndroidUtilities.dp(40), 0);
         emptyView.addView(emptyTitleTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 0, 11, 0, 0));
@@ -1216,6 +1216,36 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
         updateTitle(false);
         updateRepeatButton();
         updateEmptyView();
+    }
+
+    @Override
+    public int getContainerViewHeight() {
+        if (playerLayout == null) {
+            return 0;
+        }
+        if (playlist.size() <= 1) {
+            return playerLayout.getMeasuredHeight() + backgroundPaddingTop;
+        } else {
+            int offset = AndroidUtilities.dp(13);
+            int top = scrollOffsetY - backgroundPaddingTop - offset;
+            if (currentSheetAnimationType == 1) {
+                top += listView.getTranslationY();
+            }
+            if (top + backgroundPaddingTop < ActionBar.getCurrentActionBarHeight()) {
+                float toMove = offset + AndroidUtilities.dp(11 - 7);
+                float moveProgress = Math.min(1.0f, (ActionBar.getCurrentActionBarHeight() - top - backgroundPaddingTop) / toMove);
+                float availableToMove = ActionBar.getCurrentActionBarHeight() - toMove;
+
+                int diff = (int) (availableToMove * moveProgress);
+                top -= diff;
+            }
+
+            if (Build.VERSION.SDK_INT >= 21) {
+                top += AndroidUtilities.statusBarHeight;
+            }
+
+            return container.getMeasuredHeight() - top;
+        }
     }
 
     private void startForwardRewindingSeek() {
@@ -1404,7 +1434,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     }
                 }
                 if (f == null) {
-                    f = FileLoader.getPathToMessage(messageObject.messageOwner);
+                    f = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner);
                 }
 
                 if (f.exists()) {
@@ -1472,7 +1502,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                 }
             }
             if (path == null || path.length() == 0) {
-                path = FileLoader.getPathToMessage(messageObject.messageOwner).toString();
+                path = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner).toString();
             }
             MediaController.saveFile(path, parentActivity, 3, fileName, messageObject.getDocument() != null ? messageObject.getDocument().mime_type : "", () -> BulletinFactory.of((FrameLayout) containerView, resourcesProvider).createDownloadBulletin(BulletinFactory.FileType.AUDIO).show());
         }
@@ -1837,7 +1867,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             }
         }
         if (cacheFile == null) {
-            cacheFile = FileLoader.getPathToMessage(messageObject.messageOwner);
+            cacheFile = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner);
         }
         boolean canStream = SharedConfig.streamMedia && (int) messageObject.getDialogId() != 0 && messageObject.isMusic();
         if (!cacheFile.exists() && !canStream) {

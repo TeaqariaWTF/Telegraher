@@ -15,8 +15,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 public class SizeNotifierFrameLayoutPhoto extends FrameLayout {

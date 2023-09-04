@@ -27,8 +27,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.util.Consumer;
 import androidx.core.util.Preconditions;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLoader;
@@ -385,6 +383,7 @@ public class AvatarPreviewer {
         @Override
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
+            imageReceiver.onAttachedToWindow();
             NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, NotificationCenter.fileLoaded);
             NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, NotificationCenter.fileLoadProgressChanged);
         }
@@ -392,6 +391,7 @@ public class AvatarPreviewer {
         @Override
         protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
+            imageReceiver.onDetachedFromWindow();
             NotificationCenter.getInstance(UserConfig.selectedAccount).removeObserver(this, NotificationCenter.fileLoaded);
             NotificationCenter.getInstance(UserConfig.selectedAccount).removeObserver(this, NotificationCenter.fileLoadProgressChanged);
         }

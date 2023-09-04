@@ -55,6 +55,7 @@ public class LocaleController {
     public static int nameDisplayOrder = 1;
     public static boolean is24HourFormat = false;
     public FastDateFormat formatterDay;
+    public FastDateFormat formatterDayS;
     public FastDateFormat formatterWeek;
     public FastDateFormat formatterWeekLong;
     public FastDateFormat formatterDayMonth;
@@ -700,7 +701,7 @@ public class LocaleController {
             }
         }
         editor.putString("unofficial", stringBuilder.toString());
-        editor.commit();
+        editor.apply();
     }
 
     public boolean deleteLanguage(LocaleInfo localeInfo, int currentAccount) {
@@ -908,7 +909,7 @@ public class LocaleController {
                 SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putString("language", localeInfo.getKey());
-                editor.commit();
+                editor.apply();
             }
             if (pathToFile == null) {
                 localeValues.clear();
@@ -1080,14 +1081,17 @@ public class LocaleController {
         return getString(param, key + "_other", resourceId);
     }
 
-    public static String formatPluralString(String key, int plural) {
+    public static String formatPluralString(String key, int plural, Object... args) {
         if (key == null || key.length() == 0 || getInstance().currentPluralRules == null) {
             return "LOC_ERR:" + key;
         }
         String param = getInstance().stringForQuantity(getInstance().currentPluralRules.quantityForNumber(plural));
         param = key + "_" + param;
         int resourceId = ApplicationLoader.applicationContext.getResources().getIdentifier(param, "string", ApplicationLoader.applicationContext.getPackageName());
-        return formatString(param, key + "_other", resourceId, plural);
+        Object[] argsWithPlural = new Object[args.length + 1];
+        argsWithPlural[0] = plural;
+        System.arraycopy(args, 0, argsWithPlural, 1, args.length);
+        return formatString(param, key + "_other", resourceId, argsWithPlural);
     }
 
     public static String formatPluralStringComma(String key, int plural) {
@@ -1616,6 +1620,18 @@ public class LocaleController {
         return "LOC_ERR";
     }
 
+    public static String formatDateBitch(long date, boolean wSeconds) {
+        try {
+            date *= 1000;
+            Calendar rightNow = Calendar.getInstance();
+            rightNow.setTimeInMillis(date);
+            return String.format("%1$s/%2$s", getInstance().formatterYear.format(new Date(date)), wSeconds ? getInstance().formatterDayS.format(new Date(date)) : getInstance().formatterDay.format(new Date(date)));
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return "LOC_ERR";
+    }
+
     public static String formatDateCallLog(long date) {
         try {
             date *= 1000;
@@ -1715,15 +1731,17 @@ public class LocaleController {
         return text;
     }
 
-    public static String formatDateOnline(long date) {
+    public static String formatDateOnline(long date, boolean[] madeShorter) {
         try {
             date *= 1000;
             Calendar rightNow = Calendar.getInstance();
             int day = rightNow.get(Calendar.DAY_OF_YEAR);
             int year = rightNow.get(Calendar.YEAR);
+            int hour = rightNow.get(Calendar.HOUR_OF_DAY);
             rightNow.setTimeInMillis(date);
             int dateDay = rightNow.get(Calendar.DAY_OF_YEAR);
             int dateYear = rightNow.get(Calendar.YEAR);
+            int dateHour = rightNow.get(Calendar.HOUR_OF_DAY);
 
             if (dateDay == day && year == dateYear) {
                 return LocaleController.formatString("LastSeenFormatted", R.string.LastSeenFormatted, LocaleController.formatString("TodayAtFormatted", R.string.TodayAtFormatted, getInstance().formatterDay.format(new Date(date))));
@@ -1736,7 +1754,15 @@ public class LocaleController {
                     return LocaleController.formatPluralString("LastSeenHours", (int) Math.ceil(diff / 60.0f));
                 }*/
             } else if (dateDay + 1 == day && year == dateYear) {
-                return LocaleController.formatString("LastSeenFormatted", R.string.LastSeenFormatted, LocaleController.formatString("YesterdayAtFormatted", R.string.YesterdayAtFormatted, getInstance().formatterDay.format(new Date(date))));
+                if (madeShorter != null) {
+                    madeShorter[0] = true;
+                    if (hour <= 6 && dateHour > 18 && is24HourFormat) {
+                        return LocaleController.formatString("LastSeenFormatted", R.string.LastSeenFormatted, getInstance().formatterDay.format(new Date(date)));
+                    }
+                    return LocaleController.formatString("YesterdayAtFormatted", R.string.YesterdayAtFormatted, getInstance().formatterDay.format(new Date(date)));
+                } else {
+                    return LocaleController.formatString("LastSeenFormatted", R.string.LastSeenFormatted, LocaleController.formatString("YesterdayAtFormatted", R.string.YesterdayAtFormatted, getInstance().formatterDay.format(new Date(date))));
+                }
             } else if (Math.abs(System.currentTimeMillis() - date) < 31536000000L) {
                 String format = LocaleController.formatString("formatDateAtTime", R.string.formatDateAtTime, getInstance().formatterDayMonth.format(new Date(date)), getInstance().formatterDay.format(new Date(date)));
                 return LocaleController.formatString("LastSeenDateFormatted", R.string.LastSeenDateFormatted, format);
@@ -1790,6 +1816,7 @@ public class LocaleController {
         formatterScheduleDay = createFormatter(locale, getStringInternal("formatDateSchedule", R.string.formatDateSchedule), "MMM d");
         formatterScheduleYear = createFormatter(locale, getStringInternal("formatDateScheduleYear", R.string.formatDateScheduleYear), "MMM d yyyy");
         formatterDay = createFormatter(lang.toLowerCase().equals("ar") || lang.toLowerCase().equals("ko") ? locale : Locale.US, is24HourFormat ? getStringInternal("formatterDay24H", R.string.formatterDay24H) : getStringInternal("formatterDay12H", R.string.formatterDay12H), is24HourFormat ? "HH:mm" : "h:mm a");
+        formatterDayS = createFormatter(lang.toLowerCase().equals("ar") || lang.toLowerCase().equals("ko") ? locale : Locale.US, is24HourFormat ? "HH:mm:ss" : "h:mm:ss a", is24HourFormat ? "HH:mm:ss" : "h:mm:ss a");
         formatterStats = createFormatter(locale, is24HourFormat ? getStringInternal("formatterStats24H", R.string.formatterStats24H) : getStringInternal("formatterStats12H", R.string.formatterStats12H), is24HourFormat ? "MMM dd yyyy, HH:mm" : "MMM dd yyyy, h:mm a");
         formatterBannedUntil = createFormatter(locale, is24HourFormat ? getStringInternal("formatterBannedUntil24H", R.string.formatterBannedUntil24H) : getStringInternal("formatterBannedUntil12H", R.string.formatterBannedUntil12H), is24HourFormat ? "MMM dd yyyy, HH:mm" : "MMM dd yyyy, h:mm a");
         formatterBannedUntilThisYear = createFormatter(locale, is24HourFormat ? getStringInternal("formatterBannedUntilThisYear24H", R.string.formatterBannedUntilThisYear24H) : getStringInternal("formatterBannedUntilThisYear12H", R.string.formatterBannedUntilThisYear12H), is24HourFormat ? "MMM dd, HH:mm" : "MMM dd, h:mm a");
@@ -1996,6 +2023,10 @@ public class LocaleController {
     }
 
     public static String formatUserStatus(int currentAccount, TLRPC.User user, boolean[] isOnline) {
+        return formatUserStatus(currentAccount, user, isOnline, null);
+    }
+
+    public static String formatUserStatus(int currentAccount, TLRPC.User user, boolean[] isOnline, boolean[] madeShorter) {
         if (user != null && user.status != null && user.status.expires == 0) {
             if (user.status instanceof TLRPC.TL_userStatusRecently) {
                 user.status.expires = -100;
@@ -2031,8 +2062,8 @@ public class LocaleController {
                     return getString("WithinAWeek", R.string.WithinAWeek);
                 } else if (user.status.expires == -102) {
                     return getString("WithinAMonth", R.string.WithinAMonth);
-                }  else {
-                    return formatDateOnline(user.status.expires);
+                } else {
+                    return formatDateOnline(user.status.expires, madeShorter);
                 }
             }
         }
@@ -2144,7 +2175,7 @@ public class LocaleController {
                         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putString("language", localeInfo.getKey());
-                        editor.commit();
+                        editor.apply();
 
                         localeValues = valuesToSet;
                         currentLocale = newLocale;
@@ -2178,6 +2209,10 @@ public class LocaleController {
     }
 
     public void loadRemoteLanguages(final int currentAccount) {
+        loadRemoteLanguages(currentAccount, true);
+    }
+
+    public void loadRemoteLanguages(final int currentAccount, boolean applyCurrent) {
         if (loadingRemoteLanguages) {
             return;
         }
@@ -2244,7 +2279,9 @@ public class LocaleController {
                     }
                     saveOtherLanguages();
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.suggestedLangpack);
-                    applyLanguage(currentLocaleInfo, true, false, currentAccount);
+                    if (applyCurrent) {
+                        applyLanguage(currentLocaleInfo, true, false, currentAccount);
+                    }
                 });
             }
         }, ConnectionsManager.RequestFlagWithoutLogin);
@@ -2289,9 +2326,7 @@ public class LocaleController {
                     }
                 }, ConnectionsManager.RequestFlagWithoutLogin);
             } else {
-                for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                    if (!UserConfig.existsInHsAccs(a)) continue;
-                    if (UserConfig.TDBG) System.out.printf("HEY LocaleController ImportingService [%d]%n", a);
+                for (int a : SharedConfig.activeAccounts) {
                     ConnectionsManager.setLangCode(localeInfo.getLangCode());
                 }
                 TLRPC.TL_langpack_getLangPack req = new TLRPC.TL_langpack_getLangPack();

@@ -21,8 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.ui.ActionBar.Theme;
@@ -107,7 +105,7 @@ public class PullForegroundDrawable {
     };
 
     public PullForegroundDrawable(String pullText, String releaseText) {
-        tooltipTextPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        tooltipTextPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         tooltipTextPaint.setTextAlign(Paint.Align.CENTER);
         tooltipTextPaint.setTextSize(AndroidUtilities.dp(16));
 

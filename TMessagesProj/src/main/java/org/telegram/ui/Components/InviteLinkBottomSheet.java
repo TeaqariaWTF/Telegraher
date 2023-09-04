@@ -26,11 +26,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.MessagesStorage;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
@@ -49,6 +48,7 @@ import org.telegram.ui.ManageLinksActivity;
 import org.telegram.ui.ProfileActivity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -116,6 +116,7 @@ public class InviteLinkBottomSheet extends BottomSheet {
         this.chatId = chatId;
         this.permanent = permanent;
         this.isChannel = isChannel;
+        fixNavigationBar(getThemedColor(Theme.key_graySection));
 
         if (this.users == null) {
             this.users = new HashMap<>();
@@ -307,9 +308,9 @@ public class InviteLinkBottomSheet extends BottomSheet {
         titleTextView.setSingleLine(true);
         titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         titleTextView.setEllipsize(TextUtils.TruncateAt.END);
-        titleTextView.setPadding(AndroidUtilities.dp(18), 0, AndroidUtilities.dp(18), 0);
+        titleTextView.setPadding(AndroidUtilities.dp(23), 0, AndroidUtilities.dp(23), 0);
         titleTextView.setGravity(Gravity.CENTER_VERTICAL);
-        titleTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         if (!permanent) {
             if (invite.expired) {
                 titleTextView.setText(LocaleController.getString("ExpiredLink", R.string.ExpiredLink));
@@ -331,8 +332,8 @@ public class InviteLinkBottomSheet extends BottomSheet {
             titleTextView.setText(builder);
         }
 
-        containerView.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT, 0, !titleVisible ? 0 : 48, 0, 0));
-        containerView.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, !titleVisible ? 48 : 50, Gravity.LEFT | Gravity.TOP, 0, 0, 0, 0));
+        containerView.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT, 0, !titleVisible ? 0 : 44, 0, 0));
+        containerView.addView(titleTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, !titleVisible ? 44 : 50, Gravity.LEFT | Gravity.TOP, 0, 0, 0, 0));
 
         updateRows();
         loadUsers();
@@ -463,6 +464,7 @@ public class InviteLinkBottomSheet extends BottomSheet {
         emptyView = rowCount++;
 
         boolean needUsers = invite.usage > 0 || invite.usage_limit > 0 || invite.requested > 0;
+        boolean needLoadUsers = invite.usage > joinedUsers.size() || invite.request_needed && invite.requested > requestedUsers.size();
         boolean usersLoaded = false;
         if (!joinedUsers.isEmpty()) {
             dividerRow = rowCount++;
@@ -482,7 +484,7 @@ public class InviteLinkBottomSheet extends BottomSheet {
             emptyView3 = rowCount++;
             usersLoaded = true;
         }
-        if (needUsers) {
+        if (needUsers || needLoadUsers) {
             if (!usersLoaded) {
                 dividerRow = rowCount++;
                 loadingRow = rowCount++;
@@ -533,7 +535,7 @@ public class InviteLinkBottomSheet extends BottomSheet {
                     HeaderCell headerCell = new HeaderCell(context, Theme.key_windowBackgroundWhiteBlueHeader, 21, 15, true);
                     headerCell.getTextView2().setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteRedText));
                     headerCell.getTextView2().setTextSize(15);
-                    headerCell.getTextView2().setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    headerCell.getTextView2().setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     view = headerCell;
                     break;
                 case 1:

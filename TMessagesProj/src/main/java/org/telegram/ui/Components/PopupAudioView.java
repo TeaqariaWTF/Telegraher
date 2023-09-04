@@ -18,8 +18,6 @@ import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.ImageLoader;
@@ -285,7 +283,7 @@ public class PopupAudioView extends BaseCell implements SeekBar.SeekBarDelegate,
 
     public void updateButtonState() {
         String fileName = currentMessageObject.getFileName();
-        File cacheFile = FileLoader.getPathToMessage(currentMessageObject.messageOwner);
+        File cacheFile = FileLoader.getInstance(currentAccount).getPathToMessage(currentMessageObject.messageOwner);
         if (cacheFile.exists()) {
             DownloadController.getInstance(currentAccount).removeLoadingFileObserver(this);
             boolean playing = MediaController.getInstance().isPlayingMessage(currentMessageObject);

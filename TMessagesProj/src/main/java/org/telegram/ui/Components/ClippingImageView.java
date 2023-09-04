@@ -20,8 +20,6 @@ import android.graphics.Shader;
 import androidx.annotation.Keep;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.ImageReceiver;
@@ -249,6 +247,16 @@ public class ClippingImageView extends View {
 
     public void setOrientation(int angle) {
         orientation = angle;
+    }
+
+    public float getCenterX() {
+        float scaleY = getScaleY();
+        return getTranslationX() + (clipLeft / scaleY + (getWidth() - clipRight / scaleY)) / 2 * getScaleX();
+    }
+
+    public float getCenterY() {
+        float scaleY = getScaleY();
+        return getTranslationY() + (clipTop / scaleY + (getHeight() - clipBottom / scaleY)) / 2 * getScaleY();
     }
 
     public void setImageBitmap(ImageReceiver.BitmapHolder bitmap) {

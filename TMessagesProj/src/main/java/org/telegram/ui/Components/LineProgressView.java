@@ -15,8 +15,6 @@ import android.graphics.RectF;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.Components.voip.CellFlickerDrawable;
 
@@ -129,7 +127,7 @@ public class LineProgressView extends View {
                 cellFlickerDrawable.repeatProgress = 1.2f;
             }
             cellFlickerDrawable.setParentWidth(getMeasuredWidth());
-            cellFlickerDrawable.draw(canvas, rect, getHeight() / 2f);
+            cellFlickerDrawable.draw(canvas, rect, getHeight() / 2f, null);
             invalidate();
         }
 

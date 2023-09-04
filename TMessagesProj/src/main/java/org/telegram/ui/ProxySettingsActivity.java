@@ -43,8 +43,6 @@ import android.widget.TextView;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -242,7 +240,7 @@ public class ProxySettingsActivity extends BaseFragment {
                         editor.putString("proxy_secret", currentProxyInfo.secret);
                         ConnectionsManager.setProxySettings(enabled, currentProxyInfo.address, currentProxyInfo.port, currentProxyInfo.username, currentProxyInfo.password, currentProxyInfo.secret);
                     }
-                    editor.commit();
+                    editor.apply();
 
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
 
@@ -251,7 +249,7 @@ public class ProxySettingsActivity extends BaseFragment {
             }
         });
 
-        doneItem = actionBar.createMenu().addItemWithWidth(done_button, R.drawable.ic_done, AndroidUtilities.dp(56));
+        doneItem = actionBar.createMenu().addItemWithWidth(done_button, R.drawable.ic_ab_done, AndroidUtilities.dp(56));
         doneItem.setContentDescription(LocaleController.getString("Done", R.string.Done));
 
         fragmentView = new FrameLayout(context);

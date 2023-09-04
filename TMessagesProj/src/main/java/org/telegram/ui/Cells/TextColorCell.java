@@ -14,16 +14,12 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import androidx.annotation.Keep;
-
-import android.graphics.Typeface;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.ui.ActionBar.Theme;
@@ -33,6 +29,7 @@ import java.util.ArrayList;
 
 public class TextColorCell extends FrameLayout {
 
+    private Theme.ResourcesProvider resourcesProvider;
     private TextView textView;
     private boolean needDivider;
     private int currentColor;
@@ -44,25 +41,25 @@ public class TextColorCell extends FrameLayout {
     public final static int[] colorsToSave = new int[] {0xffff0000, 0xffff8e01, 0xffffff00, 0xff00ff00, 0xff00ffff, 0xff0000ff, 0xffd274f9, 0xffff00ff, 0xffffffff};
 
     public TextColorCell(Context context) {
+        this(context, null);
+    }
+
+    public TextColorCell(Context context, Theme.ResourcesProvider resourcesProvider) {
         super(context);
+        this.resourcesProvider = resourcesProvider;
 
         if (colorPaint == null) {
             colorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         }
 
         textView = new TextView(context);
-        textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         textView.setLines(1);
         textView.setMaxLines(1);
         textView.setSingleLine(true);
         textView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
         addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, 21, 0, 21, 0));
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
     }
 
     @Keep

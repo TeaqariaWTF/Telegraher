@@ -23,11 +23,10 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
@@ -94,7 +93,7 @@ public class ClearHistoryAlert extends BottomSheet {
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
         }
 
@@ -245,7 +244,7 @@ public class ClearHistoryAlert extends BottomSheet {
 
         if (!autoDeleteOnly) {
             TextView textView = new TextView(context);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
             textView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
             textView.setText(LocaleController.getString("ClearHistory", R.string.ClearHistory));
@@ -316,7 +315,7 @@ public class ClearHistoryAlert extends BottomSheet {
             linearLayout.addView(lottieImageView, LayoutHelper.createLinear(160, 160, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 17, 0, 17, 0));
 
             TextView percentTextView = new TextView(context);
-            percentTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            percentTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             percentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
             percentTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
             percentTextView.setText(LocaleController.getString("AutoDeleteAlertTitle", R.string.AutoDeleteAlertTitle));
@@ -368,7 +367,6 @@ public class ClearHistoryAlert extends BottomSheet {
         linearLayout.addView(buttonContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
 
         TextInfoPrivacyCell infoCell = new TextInfoPrivacyCell(context, resourcesProvider);
-
         infoCell.setText(LocaleController.getString("AutoDeleteInfo", R.string.AutoDeleteInfo));
         buttonContainer.addView(infoCell);
 

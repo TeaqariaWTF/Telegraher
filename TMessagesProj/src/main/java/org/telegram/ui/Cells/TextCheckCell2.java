@@ -10,7 +10,6 @@ package org.telegram.ui.Cells;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -18,8 +17,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -62,12 +59,6 @@ public class TextCheckCell2 extends FrameLayout {
         checkBox = new Switch(context);
         checkBox.setDrawIconType(1);
         addView(checkBox, LayoutHelper.createFrame(37, 40, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.CENTER_VERTICAL, 22, 0, 22, 0));
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
-        if (this.valueTextView != null) this.valueTextView.setTypeface(font);
     }
 
     @Override
@@ -187,6 +178,5 @@ public class TextCheckCell2 extends FrameLayout {
         info.setClassName("android.widget.Switch");
         info.setCheckable(true);
         info.setChecked(checkBox.isChecked());
-        info.setContentDescription(checkBox.isChecked() ? LocaleController.getString("NotificationsOn", R.string.NotificationsOn) : LocaleController.getString("NotificationsOff", R.string.NotificationsOff));
     }
 }

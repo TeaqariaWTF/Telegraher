@@ -18,17 +18,19 @@
  */
 package com.evildayz.code.telegraher;
 
+import android.content.Context;
 import android.graphics.Typeface;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import org.telegram.messenger.*;
 import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.R;
 import org.telegram.tgnet.TLRPC;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 
 public class ThePenisMightierThanTheSword {
 
@@ -100,9 +102,71 @@ public class ThePenisMightierThanTheSword {
                 return R.drawable.telegraher_eyez;
             case 2:
                 return R.drawable.notification;
+            case 3:
+                return R.drawable.msg_report_xxx;
             case 0:
             default:
                 return R.drawable.telegraher_notification;
+        }
+    }
+
+    public static String toJson(Object o) {
+        return new GsonBuilder().disableHtmlEscaping().create().toJson(o);
+    }
+
+    public static String toJsonNestedMaps(Map<Integer, Map<String, String>> map) {
+        final Gson gson = new Gson();
+        final JsonObject jsonObject = new JsonObject();
+        for (Integer i : map.keySet()) {
+            jsonObject.add(i.toString(), gson.toJsonTree(map.get(i), Map.class));
+        }
+        return jsonObject.toString();
+    }
+
+    public static int getMaxInternalAccountId(Map<Integer, Map<String, String>> map) {//SharedConfig.thAccounts
+        Integer[] ids;
+        Integer nextId = 0;
+        if (map == null || map.isEmpty()) {
+            if (SharedConfig.activeAccounts != null && !SharedConfig.activeAccounts.isEmpty())
+                ids = SharedConfig.activeAccounts.stream().toArray(Integer[]::new);
+            else return 0;
+        } else {
+            if (map.containsKey(-1)) nextId = Integer.valueOf(map.get(-1).get("nextAccountId"));
+            ids = map.keySet().stream().toArray(Integer[]::new);
+        }
+        Arrays.sort(ids);
+        if (map.containsKey(-1) && nextId.compareTo(ids[ids.length - 1]) <= 0) {
+            nextId = ids[ids.length - 1] + 1;
+            map.get(-1).put("nextAccountId", nextId.toString());
+            ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Context.MODE_PRIVATE).edit()
+                    .putString("thAccounts", ThePenisMightierThanTheSword.toJsonNestedMaps(map))
+                    .apply();
+        }
+        return nextId;
+    }
+
+    public static boolean starrMark(boolean bool) {
+        switch (MessagesController.getGlobalTelegraherSettings().getInt("GraheriumStarrMark", 0)) {
+            case 0:
+                return false;
+            case 1:
+                return true;
+            default:
+                return bool;
+        }
+    }
+
+    public static float stickerSizeMult() {
+        switch (MessagesController.getGlobalTelegraherSettings().getInt("UIStickerSize", 2)) {
+            case 0:
+                return 4f;
+            case 1:
+                return 2f;
+            case 3:
+                return 0.5f;
+            case 2:
+            default:
+                return 1f;
         }
     }
 }

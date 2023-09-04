@@ -1,7 +1,9 @@
 package org.telegram.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -11,8 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -32,7 +32,7 @@ public class SponsoredMessageInfoView extends FrameLayout {
 
         TextView textView = new TextView(context);
         textView.setText(LocaleController.getString("SponsoredMessageInfo", R.string.SponsoredMessageInfo));
-        textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, resourcesProvider));
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
 
@@ -77,7 +77,7 @@ public class SponsoredMessageInfoView extends FrameLayout {
         button.setPadding(AndroidUtilities.dp(12), 0, AndroidUtilities.dp(12), 0);
         button.setText(LocaleController.getString("SponsoredMessageAlertLearnMoreUrl", R.string.SponsoredMessageAlertLearnMoreUrl));
         button.setTextColor(Theme.getColor(Theme.key_featuredStickers_addButton, resourcesProvider));
-        button.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), Theme.getColor(Theme.key_dialogBackground, resourcesProvider), Theme.getColor(Theme.key_featuredStickers_addButtonPressed, resourcesProvider)));
+        button.setBackground(Theme.AdaptiveRipple.filledRect(Theme.getColor(Theme.key_dialogBackground, resourcesProvider), 4));
         button.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         button.setGravity(Gravity.CENTER_VERTICAL);
 

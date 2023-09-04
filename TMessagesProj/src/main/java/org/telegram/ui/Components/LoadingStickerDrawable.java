@@ -15,8 +15,6 @@ import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.ui.ActionBar.Theme;

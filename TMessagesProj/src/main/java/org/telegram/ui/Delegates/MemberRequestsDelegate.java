@@ -41,12 +41,11 @@ import androidx.core.math.MathUtils;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MemberRequestsController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
@@ -475,7 +474,7 @@ public class MemberRequestsDelegate implements MemberRequestCell.OnClickListener
                                 : LocaleController.formatString("HasBeenAddedToGroup", R.string.HasBeenAddedToGroup, userName);
                         SpannableStringBuilder stringBuilder = new SpannableStringBuilder(message);
                         int start = message.indexOf(userName);
-                        stringBuilder.setSpan(new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium"))), start, start + userName.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                        stringBuilder.setSpan(new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf")), start, start + userName.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                         layout.textView.setText(stringBuilder);
                         if (allImporters.isEmpty()) {
                             Bulletin.make(fragment, layout, Bulletin.DURATION_LONG).show();
@@ -700,7 +699,7 @@ public class MemberRequestsDelegate implements MemberRequestCell.OnClickListener
             nameText.setMaxLines(1);
             nameText.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText, fragment.getResourceProvider()));
             nameText.setTextSize(16);
-            nameText.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            nameText.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             contentView.addView(nameText);
 
             bioText.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText, fragment.getResourceProvider()));
@@ -710,7 +709,7 @@ public class MemberRequestsDelegate implements MemberRequestCell.OnClickListener
             ActionBarMenuSubItem addCell = new ActionBarMenuSubItem(context, true, false);
             addCell.setColors(Theme.getColor(Theme.key_actionBarDefaultSubmenuItem, resourcesProvider), Theme.getColor(Theme.key_actionBarDefaultSubmenuItemIcon, resourcesProvider));
             addCell.setSelectorColor(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider));
-            addCell.setTextAndIcon(isChannel ? LocaleController.getString("AddToChannel", R.string.AddToChannel) : LocaleController.getString("AddToGroup", R.string.AddToGroup), R.drawable.actions_requests);
+            addCell.setTextAndIcon(isChannel ? LocaleController.getString("AddToChannel", R.string.AddToChannel) : LocaleController.getString("AddToGroup", R.string.AddToGroup), R.drawable.msg_requests);
             addCell.setOnClickListener((v) -> {
                 if (importer != null) {
                     onAddClicked(importer);
@@ -739,7 +738,7 @@ public class MemberRequestsDelegate implements MemberRequestCell.OnClickListener
             ActionBarMenuSubItem dismissCell = new ActionBarMenuSubItem(context, false, true);
             dismissCell.setColors(Theme.getColor(Theme.key_dialogTextRed2, resourcesProvider), Theme.getColor(Theme.key_dialogRedIcon, resourcesProvider));
             dismissCell.setSelectorColor(Theme.getColor(Theme.key_dialogButtonSelector, resourcesProvider));
-            dismissCell.setTextAndIcon(LocaleController.getString("DismissRequest", R.string.DismissRequest), R.drawable.actions_remove_user);
+            dismissCell.setTextAndIcon(LocaleController.getString("DismissRequest", R.string.DismissRequest), R.drawable.msg_remove);
             dismissCell.setOnClickListener((v) -> {
                 if (importer != null) {
                     onDismissClicked(importer);

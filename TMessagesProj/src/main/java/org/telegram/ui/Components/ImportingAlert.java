@@ -23,8 +23,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.NotificationCenter;
@@ -85,7 +83,7 @@ public class ImportingAlert extends BottomSheet implements NotificationCenter.No
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL, 10, 0, 0, 0));
         }
 
@@ -132,7 +130,7 @@ public class ImportingAlert extends BottomSheet implements NotificationCenter.No
         setCustomView(frameLayout);
 
         TextView textView = new TextView(context);
-        textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
         textView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         textView.setSingleLine(true);
@@ -150,7 +148,7 @@ public class ImportingAlert extends BottomSheet implements NotificationCenter.No
         imageView.getAnimatedDrawable().setOnFinishCallback(onFinishCallback, 178);
 
         percentTextView = new TextView(context);
-        percentTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        percentTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         percentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         percentTextView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         frameLayout.addView(percentTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 17, 262, 17, 0));
@@ -172,7 +170,7 @@ public class ImportingAlert extends BottomSheet implements NotificationCenter.No
         for (int a = 0; a < 2; a++) {
             importCountTextView[a] = new TextView(context);
             importCountTextView[a].setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-            importCountTextView[a].setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            importCountTextView[a].setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             importCountTextView[a].setTextColor(getThemedColor(Theme.key_dialogTextBlack));
             frameLayout.addView(importCountTextView[a], LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 17, 340, 17, 0));
 

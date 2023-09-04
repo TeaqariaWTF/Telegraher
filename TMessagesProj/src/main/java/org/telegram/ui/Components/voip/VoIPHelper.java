@@ -23,8 +23,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
@@ -645,7 +643,7 @@ public class VoIPHelper {
 			boolean force = preferences.getBoolean("dbg_force_tcp_in_calls", false);
 			SharedPreferences.Editor editor = preferences.edit();
 			editor.putBoolean("dbg_force_tcp_in_calls", !force);
-			editor.commit();
+			editor.apply();
 			tcpCell.setChecked(!force);
 		});
 		ll.addView(tcpCell);
@@ -657,7 +655,7 @@ public class VoIPHelper {
 				boolean force = preferences.getBoolean("dbg_dump_call_stats", false);
 				SharedPreferences.Editor editor = preferences.edit();
 				editor.putBoolean("dbg_dump_call_stats", !force);
-				editor.commit();
+				editor.apply();
 				dumpCell.setChecked(!force);
 			});
 			ll.addView(dumpCell);
@@ -670,7 +668,7 @@ public class VoIPHelper {
 				boolean force = preferences.getBoolean("dbg_force_connection_service", false);
 				SharedPreferences.Editor editor = preferences.edit();
 				editor.putBoolean("dbg_force_connection_service", !force);
-				editor.commit();
+				editor.apply();
 				connectionServiceCell.setChecked(!force);
 			});
 			ll.addView(connectionServiceCell);

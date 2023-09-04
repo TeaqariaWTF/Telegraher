@@ -12,7 +12,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.SpannableStringBuilder;
@@ -30,16 +29,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
+import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.ImageLocation;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MediaController;
 import org.telegram.messenger.MessageObject;
-import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
@@ -121,7 +118,7 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
         extTextView = new TextView(context);
         extTextView.setTextColor(getThemedColor(Theme.key_files_iconText));
         extTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        extTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        extTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         extTextView.setLines(1);
         extTextView.setMaxLines(1);
         extTextView.setSingleLine(true);
@@ -158,7 +155,7 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
         nameTextView = new TextView(context);
         nameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
         nameTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-        nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         nameTextView.setEllipsize(TextUtils.TruncateAt.END);
         nameTextView.setGravity((LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.CENTER_VERTICAL);
 
@@ -245,15 +242,6 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
             dotSpan = new SpannableStringBuilder(".");
             dotSpan.setSpan(new DotDividerSpan(), 0, 1, 0);
         }
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.nameTextView != null) this.nameTextView.setTypeface(font);
-        if (this.extTextView != null) this.extTextView.setTypeface(font);
-        if (this.dateTextView != null) this.dateTextView.setTypeface(font);
-        if (this.rightDateTextView != null) this.rightDateTextView.setTypeface(font);
-        if (this.captionTextView != null) this.captionTextView.setTypeface(font);
     }
 
     public void setDrawDownloadIcon(boolean value) {
@@ -412,7 +400,7 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
             if (!messageObject.isVideo() && !(messageObject.messageOwner.media instanceof TLRPC.TL_messageMediaPhoto) && !MessageObject.isGifDocument(document)) {
                 fileName = FileLoader.getDocumentFileName(document);
             }
-            if (TextUtils.isEmpty(fileName)) {
+            if (TextUtils.isEmpty(fileName) && document.mime_type != null) {
                 if (document.mime_type.startsWith("video")) {
                     if (MessageObject.isGifDocument(document)) {
                         fileName = LocaleController.getString("AttachGif", R.string.AttachGif);
@@ -420,7 +408,11 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
                         fileName = LocaleController.getString("AttachVideo", R.string.AttachVideo);
                     }
                 } else if (document.mime_type.startsWith("image")) {
-                    fileName = LocaleController.getString("AttachPhoto", R.string.AttachPhoto);
+                    if (MessageObject.isGifDocument(document)) {
+                        fileName = LocaleController.getString("AttachGif", R.string.AttachGif);
+                    } else {
+                        fileName = LocaleController.getString("AttachPhoto", R.string.AttachPhoto);
+                    }
                 } else if (document.mime_type.startsWith("audio")) {
                     fileName = LocaleController.getString("AttachAudio", R.string.AttachAudio);
                 } else {
@@ -694,7 +686,7 @@ public class SharedDocumentCell extends FrameLayout implements DownloadControlle
         super.onInitializeAccessibilityNodeInfo(info);
         if (checkBox.isChecked()) {
             info.setCheckable(true);
-            info.setChecked(true);
+            info.setChecked(checkBox.isChecked());
         }
     }
 

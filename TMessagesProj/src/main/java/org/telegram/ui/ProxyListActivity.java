@@ -25,8 +25,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.LocaleController;
@@ -47,11 +50,6 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +112,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
             addView(valueTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, (LocaleController.isRTL ? 56 : 21), 35, (LocaleController.isRTL ? 21 : 56), 0));
 
             checkImageView = new ImageView(context);
-            checkImageView.setImageResource(R.drawable.profile_info);
+            checkImageView.setImageResource(R.drawable.msg_info);
             checkImageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3), PorterDuff.Mode.MULTIPLY));
             checkImageView.setScaleType(ImageView.ScaleType.CENTER);
             checkImageView.setContentDescription(LocaleController.getString("Edit", R.string.Edit));
@@ -280,7 +278,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                             editor.putString("proxy_user", SharedConfig.currentProxy.username);
                             editor.putInt("proxy_port", SharedConfig.currentProxy.port);
                             editor.putString("proxy_secret", SharedConfig.currentProxy.secret);
-                            editor.commit();
+                            editor.apply();
                         }
                     } else {
                         presentFragment(new ProxySettingsActivity());
@@ -304,7 +302,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
 
                 SharedPreferences.Editor editor = MessagesController.getGlobalMainSettings().edit();
                 editor.putBoolean("proxy_enabled", useProxySettings);
-                editor.commit();
+                editor.apply();
 
                 ConnectionsManager.setProxySettings(useProxySettings, SharedConfig.currentProxy.address, SharedConfig.currentProxy.port, SharedConfig.currentProxy.username, SharedConfig.currentProxy.password, SharedConfig.currentProxy.secret);
                 NotificationCenter.getGlobalInstance().removeObserver(ProxyListActivity.this, NotificationCenter.proxySettingsChanged);
@@ -325,7 +323,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                 textCheckCell.setChecked(useProxyForCalls);
                 SharedPreferences.Editor editor = MessagesController.getGlobalMainSettings().edit();
                 editor.putBoolean("proxy_enabled_calls", useProxyForCalls);
-                editor.commit();
+                editor.apply();
             } else if (position >= proxyStartRow && position < proxyEndRow) {
                 SharedConfig.ProxyInfo info = SharedConfig.proxyList.get(position - proxyStartRow);
                 useProxySettings = true;
@@ -340,7 +338,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     useProxyForCalls = false;
                     editor.putBoolean("proxy_enabled_calls", false);
                 }
-                editor.commit();
+                editor.apply();
                 SharedConfig.currentProxy = info;
                 for (int a = proxyStartRow; a < proxyEndRow; a++) {
                     RecyclerListView.Holder holder = (RecyclerListView.Holder) listView.findViewHolderForAdapterPosition(a);

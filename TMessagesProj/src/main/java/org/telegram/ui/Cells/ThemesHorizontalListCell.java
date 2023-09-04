@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -33,8 +32,6 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.FileLoader;
@@ -43,7 +40,7 @@ import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
-import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
@@ -745,7 +742,7 @@ public class ThemesHorizontalListCell extends RecyclerListView implements Notifi
 
         SharedPreferences.Editor editor = ApplicationLoader.applicationContext.getSharedPreferences("themeconfig", Activity.MODE_PRIVATE).edit();
         editor.putString(currentType == ThemeActivity.THEME_TYPE_NIGHT || themeInfo.isDark() ? "lastDarkTheme" : "lastDayTheme", themeInfo.getKey());
-        editor.commit();
+        editor.apply();
 
         if (currentType == ThemeActivity.THEME_TYPE_NIGHT) {
             if (themeInfo == Theme.getCurrentNightTheme()) {
@@ -810,9 +807,7 @@ public class ThemesHorizontalListCell extends RecyclerListView implements Notifi
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ThemesHorizontalListCell onAttachedToWindow [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.fileLoaded);
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.fileLoadFailed);
         }
@@ -821,9 +816,7 @@ public class ThemesHorizontalListCell extends RecyclerListView implements Notifi
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ThemesHorizontalListCell onDetachedFromWindow [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.fileLoaded);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.fileLoadFailed);
         }

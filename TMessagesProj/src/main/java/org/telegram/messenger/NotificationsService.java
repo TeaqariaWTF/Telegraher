@@ -11,13 +11,14 @@ package org.telegram.messenger;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-
 import androidx.core.app.NotificationCompat;
 
 public class NotificationsService extends Service {
@@ -29,14 +30,14 @@ public class NotificationsService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String CHANNEL_ID = "push_service_channel";
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Push Notifications Service", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,"Push Notifications Service",NotificationManager.IMPORTANCE_DEFAULT);
             notificationManager.createNotificationChannel(channel);
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                     .setShowWhen(false)
                     .setOngoing(true)
                     .setSmallIcon(R.drawable.msg_report_xxx)
-                    .setContentText(LocaleController.getString(R.string.THNotificationBackgroundNotice)).build();
-            startForeground(9999, notification);
+                    .setContentText("To let you receive push notifications w/o GApps").build();
+            startForeground(9999,notification);
         }
     }
 

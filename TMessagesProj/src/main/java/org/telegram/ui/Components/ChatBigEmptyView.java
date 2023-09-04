@@ -19,8 +19,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -64,8 +62,10 @@ public class ChatBigEmptyView extends LinearLayout {
             textViews.add(statusTextView);
             addView(statusTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP));
         } else {
-            ImageView imageView = new ImageView(context);
-            imageView.setImageResource(R.drawable.cloud_big);
+            RLottieImageView imageView = new RLottieImageView(context);
+            imageView.setAutoRepeat(true);
+            imageView.setAnimation(R.raw.utyan_saved_messages, 120, 120);
+            imageView.playAnimation();
             addView(imageView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 2, 0, 0));
         }
 
@@ -79,7 +79,7 @@ public class ChatBigEmptyView extends LinearLayout {
         } else {
             textView.setText(LocaleController.getString("ChatYourSelfTitle", R.string.ChatYourSelfTitle));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
         }
         textView.setTextColor(getThemedColor(Theme.key_chat_serviceText));

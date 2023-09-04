@@ -66,7 +66,7 @@ public class SecretChatHelper extends BaseController {
         }
     }
 
-    public static int CURRENT_SECRET_CHAT_LAYER = 101;
+    public static final int CURRENT_SECRET_CHAT_LAYER = 101;
 
     private ArrayList<Integer> sendingNotifyLayer = new ArrayList<>();
     private SparseArray<ArrayList<TL_decryptedMessageHolder>> secretHolesQueue = new SparseArray<>();
@@ -77,15 +77,15 @@ public class SecretChatHelper extends BaseController {
     private ArrayList<Long> pendingEncMessagesToDelete = new ArrayList<>();
     private boolean startingSecretChat = false;
 
-    private static volatile SecretChatHelper[] Instance = new SecretChatHelper[UserConfig.MAX_ACCOUNT_COUNT];
+    private static SparseArray<SecretChatHelper> Instance = new SparseArray<>();
 
     public static SecretChatHelper getInstance(int num) {
-        SecretChatHelper localInstance = Instance[num];
+        SecretChatHelper localInstance = Instance.get(num);
         if (localInstance == null) {
             synchronized (SecretChatHelper.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new SecretChatHelper(num);
+                    Instance.put(num, localInstance = new SecretChatHelper(num));
                 }
             }
         }
@@ -206,7 +206,7 @@ public class SecretChatHelper extends BaseController {
                 if (dialog.folder_id == 1) {
                     SharedPreferences.Editor editor = MessagesController.getNotificationsSettings(currentAccount).edit();
                     editor.putBoolean("dialog_bar_archived" + dialog_id, true);
-                    editor.commit();
+                    editor.apply();
                 }
                 getMessagesController().dialogs_dict.put(dialog.id, dialog);
                 getMessagesController().allDialogs.add(dialog);
@@ -530,7 +530,7 @@ public class SecretChatHelper extends BaseController {
                 size.location.local_id = file.key_fingerprint;
                 String fileName2 = size.location.volume_id + "_" + size.location.local_id;
                 File cacheFile = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), fileName + ".jpg");
-                File cacheFile2 = FileLoader.getPathToAttach(size);
+                File cacheFile2 = getFileLoader().getPathToAttach(size);
                 cacheFile.renameTo(cacheFile2);
                 ImageLoader.getInstance().replaceImageInCache(fileName, fileName2, ImageLocation.getForPhoto(size, newMsg.media.photo), true);
                 ArrayList<TLRPC.Message> arr = new ArrayList<>();
@@ -559,7 +559,7 @@ public class SecretChatHelper extends BaseController {
 
                 if (newMsg.attachPath != null && newMsg.attachPath.startsWith(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE).getAbsolutePath())) {
                     File cacheFile = new File(newMsg.attachPath);
-                    File cacheFile2 = FileLoader.getPathToAttach(newMsg.media.document);
+                    File cacheFile2 = getFileLoader().getPathToAttach(newMsg.media.document);
                     if (cacheFile.renameTo(cacheFile2)) {
                         newMsgObj.mediaExists = newMsgObj.attachPathExists;
                         newMsgObj.attachPathExists = false;
@@ -921,7 +921,7 @@ public class SecretChatHelper extends BaseController {
                     big.w = decryptedMessage.media.w;
                     big.h = decryptedMessage.media.h;
                     big.type = "x";
-                    big.size = file.size;
+                    big.size = (int) file.size;
                     big.location = new TLRPC.TL_fileEncryptedLocation();
                     big.location.key = decryptedMessage.media.key;
                     big.location.iv = decryptedMessage.media.iv;
@@ -1155,9 +1155,9 @@ public class SecretChatHelper extends BaseController {
 //                            getNotificationsController().processDialogsUpdateRead(dialogsToUpdate);
 //                        }));
 //                        getMessagesStorage().deleteDialog(did, 1);
-                        getMessagesStorage().markEcryptedMessagesIsDeleted(did, 1);
 //                        getNotificationCenter().postNotificationName(NotificationCenter.dialogsNeedReload);
 //                        getNotificationCenter().postNotificationName(NotificationCenter.removeAllMessagesFromDialog, did, false, null);
+//                        getMessagesStorage().markEcryptedMessagesIsDeleted(did, 1);//TODO REFAIRE - whole dialog wipe green chats
                     });
                     return null;
                 } else if (serviceMessage.action instanceof TLRPC.TL_decryptedMessageActionDeleteMessages) {
@@ -1390,8 +1390,7 @@ public class SecretChatHelper extends BaseController {
                 for (int a = sSeq; a <= endSeq; a += 2) {
                     messagesToResend.put(a, null);
                 }
-//                cursor = getMessagesStorage().getDatabase().queryFinalized(String.format(Locale.US, "SELECT m.data, r.random_id, s.seq_in, s.seq_out, m.ttl, s.mid FROM messages_seq as s LEFT JOIN randoms_v2 as r ON r.mid = s.mid LEFT JOIN messages_v2 as m ON m.mid = s.mid WHERE m.uid = %d AND m.out = 1 AND s.seq_out >= %d AND s.seq_out <= %d ORDER BY seq_out ASC", dialog_id, sSeq, endSeq));
-                cursor = getMessagesStorage().getDatabase().queryFinalized(String.format(Locale.US, "SELECT m.data, r.random_id, s.seq_in, s.seq_out, m.ttl, s.mid, m.isdel FROM messages_seq as s LEFT JOIN randoms_v2 as r ON r.mid = s.mid LEFT JOIN messages_v2 as m ON m.mid = s.mid WHERE m.uid = %d AND m.out = 1 AND s.seq_out >= %d AND s.seq_out <= %d ORDER BY seq_out ASC", dialog_id, sSeq, endSeq));
+                cursor = getMessagesStorage().getDatabase().queryFinalized(String.format(Locale.US, "SELECT m.data, r.random_id, s.seq_in, s.seq_out, m.ttl, s.mid, tmd.isdel FROM messages_seq as s LEFT JOIN randoms_v2 as r ON r.mid = s.mid LEFT JOIN messages_v2 as m ON m.mid = s.mid LEFT JOIN telegraher_message_deletions as tmd ON tmd.mid=m.mid AND tmd.uid=m.uid WHERE m.uid = %d AND m.out = 1 AND s.seq_out >= %d AND s.seq_out <= %d ORDER BY seq_out ASC", dialog_id, sSeq, endSeq));
                 while (cursor.next()) {
                     TLRPC.Message message;
                     long random_id = cursor.longValue(1);
@@ -1408,7 +1407,7 @@ public class SecretChatHelper extends BaseController {
                         message.readAttachPath(data, getUserConfig().clientUserId);
                         data.reuse();
                         message.random_id = random_id;
-                        message.isDeleted = cursor.intValue(6) == 1;
+                        message.isDeleted = !cursor.isNull(6);
                         message.dialog_id = dialog_id;
                         message.seq_in = seq_in;
                         message.seq_out = seq_out;

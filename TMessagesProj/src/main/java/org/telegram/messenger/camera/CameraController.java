@@ -22,8 +22,6 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Base64;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Bitmaps;
@@ -224,7 +222,7 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                                 serializedData.writeInt32(size.mHeight);
                             }
                         }
-                        preferences.edit().putString("cameraCache", Base64.encodeToString(serializedData.toByteArray(), Base64.DEFAULT)).commit();
+                        preferences.edit().putString("cameraCache", Base64.encodeToString(serializedData.toByteArray(), Base64.DEFAULT)).apply();
                         serializedData.cleanup();
                     }
                     cameraInfos = result;
@@ -241,7 +239,7 @@ public class CameraController implements MediaRecorder.OnInfoListener {
                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.cameraInitied);
                 });
             } catch (Exception e) {
-                FileLog.e(e);
+                FileLog.e(e, !"APP_PAUSED".equals(e.getMessage()));
                 AndroidUtilities.runOnUIThread(() -> {
                     onFinishCameraInitRunnables.clear();
                     loadingCameras = false;

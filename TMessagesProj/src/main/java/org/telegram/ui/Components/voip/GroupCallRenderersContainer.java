@@ -31,12 +31,11 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserObject;
@@ -265,13 +264,13 @@ public class GroupCallRenderersContainer extends FrameLayout {
         pinTextView = new TextView(context);
         pinTextView.setTextColor(Color.WHITE);
         pinTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        pinTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        pinTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         pinTextView.setText(LocaleController.getString("CallVideoPin", R.string.CallVideoPin));
 
         unpinTextView = new TextView(context);
         unpinTextView.setTextColor(Color.WHITE);
         unpinTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        unpinTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        unpinTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         unpinTextView.setText(LocaleController.getString("CallVideoUnpin", R.string.CallVideoUnpin));
 
 
@@ -1420,13 +1419,13 @@ public class GroupCallRenderersContainer extends FrameLayout {
                     }
                     if (user != null) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            spannableStringBuilder.append(UserObject.getFirstName(user), new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium"))), 0);
+                            spannableStringBuilder.append(UserObject.getFirstName(user), new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf")), 0);
                         } else {
                             spannableStringBuilder.append(UserObject.getFirstName(user));
                         }
                     } else {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            spannableStringBuilder.append(chat.title, new TypefaceSpan(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium"))), 0);
+                            spannableStringBuilder.append(chat.title, new TypefaceSpan(AndroidUtilities.getTypeface("fonts/rmedium.ttf")), 0);
                         } else {
                             spannableStringBuilder.append(chat.title);
                         }

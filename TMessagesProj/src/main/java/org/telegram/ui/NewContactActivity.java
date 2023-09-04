@@ -16,7 +16,6 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.telephony.TelephonyManager;
@@ -36,8 +35,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.telegram.PhoneFormat.PhoneFormat;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ContactsController;
@@ -190,7 +187,7 @@ public class NewContactActivity extends BaseFragment implements AdapterView.OnIt
         avatarDrawable.setInfo(5, "", "");
 
         ActionBarMenu menu = actionBar.createMenu();
-        editDoneItem = menu.addItemWithWidth(done_button, R.drawable.ic_done, AndroidUtilities.dp(56));
+        editDoneItem = menu.addItemWithWidth(done_button, R.drawable.ic_ab_done, AndroidUtilities.dp(56));
         editDoneItem.setContentDescription(LocaleController.getString("Done", R.string.Done));
 
         editDoneItemProgress = new ContextProgressView(context, 1);

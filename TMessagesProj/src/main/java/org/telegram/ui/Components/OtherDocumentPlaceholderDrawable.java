@@ -11,8 +11,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
@@ -20,6 +18,7 @@ import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.R;
+import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.TLRPC;
 
 import java.io.File;
@@ -78,11 +77,11 @@ public class OtherDocumentPlaceholderDrawable extends RecyclableDrawable impleme
         percentPaint.setColor(0xffffffff);
         openPaint.setColor(0xffffffff);
 
-        docPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
-        namePaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
-        buttonPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
-        percentPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
-        openPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        docPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+        namePaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+        buttonPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+        percentPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+        openPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
     }
 
     public OtherDocumentPlaceholderDrawable(Context context, View view, MessageObject messageObject) {
@@ -268,7 +267,7 @@ public class OtherDocumentPlaceholderDrawable extends RecyclableDrawable impleme
             String fileName = null;
             File cacheFile;
             if (TextUtils.isEmpty(parentMessageObject.messageOwner.attachPath) || !(new File(parentMessageObject.messageOwner.attachPath).exists())) {
-                cacheFile = FileLoader.getPathToMessage(parentMessageObject.messageOwner);
+                cacheFile = FileLoader.getInstance(UserConfig.selectedAccount).getPathToMessage(parentMessageObject.messageOwner);
                 if (!cacheFile.exists()) {
                     fileName = FileLoader.getAttachFileName(parentMessageObject.getDocument());
                 }

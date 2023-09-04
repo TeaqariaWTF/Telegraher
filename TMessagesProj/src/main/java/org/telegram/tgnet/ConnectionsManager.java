@@ -10,18 +10,15 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Base64;
 
-import com.google.android.exoplayer2.util.Log;
-//import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import android.util.SparseArray;
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BaseController;
 import org.telegram.messenger.BuildVars;
-import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.EmuDetector;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.KeepAliveJob;
@@ -89,12 +86,6 @@ public class ConnectionsManager extends BaseController {
     public final static byte USE_IPV6_ONLY = 1;
     public final static byte USE_IPV4_IPV6_RANDOM = 2;
 
-    protected final static byte IP_STRATEGY_BYTE = getIpStrategy();
-
-    private static int accountsCounter = 0;
-    private static int accountsExists = 0;
-    private static int accountsInit = 0;
-
     private static long lastDnsRequestTime;
 
     public final static int DEFAULT_DATACENTER_ID = Integer.MAX_VALUE;
@@ -124,10 +115,19 @@ public class ConnectionsManager extends BaseController {
         }
     };
 
+    private boolean forceTryIpV6;
+
     static {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
         threadPoolExecutor.allowCoreThreadTimeOut(true);
         DNS_THREAD_POOL_EXECUTOR = threadPoolExecutor;
+    }
+
+    public void setForceTryIpV6(boolean forceTryIpV6) {
+        if (this.forceTryIpV6 != forceTryIpV6) {
+            this.forceTryIpV6 = forceTryIpV6;
+            checkConnection();
+        }
     }
 
     private static class ResolvedDomain {
@@ -149,14 +149,15 @@ public class ConnectionsManager extends BaseController {
 
     private static int lastClassGuid = 1;
 
-    private static volatile ConnectionsManager[] Instance = new ConnectionsManager[UserConfig.MAX_ACCOUNT_COUNT];
+    private static SparseArray<ConnectionsManager> Instance = new SparseArray<>();
+
     public static ConnectionsManager getInstance(int num) {
-        ConnectionsManager localInstance = Instance[num];
+        ConnectionsManager localInstance = Instance.get(num);
         if (localInstance == null) {
             synchronized (ConnectionsManager.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new ConnectionsManager(num);
+                    Instance.put(num, localInstance = new ConnectionsManager(num));
                 }
             }
         }
@@ -165,9 +166,7 @@ public class ConnectionsManager extends BaseController {
 
     public ConnectionsManager(int instance) {
         super(instance);
-        accountsCounter++;
-        if (!UserConfig.isTh("EnableAccountExtendVanilla") && !UserConfig.existsInHsAccs(instance)) return;
-
+        ConnectionsManager.native_setJava(instance);
         connectionState = native_getConnectionState(currentAccount);
         String deviceModel;
         String systemLangCode;
@@ -181,18 +180,23 @@ public class ConnectionsManager extends BaseController {
         }
         String configPath = config.toString();
         boolean enablePushConnection = isPushConnectionEnabled();
+        getUserConfig().loadConfig();
+
         try {
+            int id = -1;
+            if (SharedConfig.thDeviceSpoofing != null && !SharedConfig.thDeviceSpoofing.isEmpty()) {
+                id = SharedConfig.thDeviceSpoofing.containsKey(instance) ? instance : -1;
+            }
             systemLangCode = LocaleController.getSystemLocaleStringIso639().toLowerCase();
             langCode = LocaleController.getLocaleStringIso639().toLowerCase();
-            deviceModel = Build.MANUFACTURER + Build.MODEL;
-            PackageInfo pInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 0);
-            appVersion = BuildVars.BUILD_VERSION_STRING + " (" + (pInfo.versionCode / 100) + ")";
+            deviceModel = SharedConfig.thDeviceSpoofing.get(id).get("deviceBrand") + SharedConfig.thDeviceSpoofing.get(id).get("deviceModel");
+            appVersion = BuildVars.BUILD_VERSION_STRING + " (" + (BuildVars.BUILD_VERSION_FULL) + ")";
             if (BuildVars.DEBUG_PRIVATE_VERSION) {
                 appVersion += " pbeta";
             } else if (BuildVars.DEBUG_VERSION) {
                 appVersion += " beta";
             }
-            systemVersion = "SDK " + Build.VERSION.SDK_INT;
+            systemVersion = "SDK " + SharedConfig.thDeviceSpoofing.get(id).get("deviceSDK");
         } catch (Exception e) {
             systemLangCode = "en";
             langCode = "";
@@ -213,30 +217,17 @@ public class ConnectionsManager extends BaseController {
             systemVersion = "SDK Unknown";
         }
         getUserConfig().loadConfig();
-        deviceModel = UserConfig.hmGetBrand(instance) + UserConfig.hmGetModel(instance);
-        systemVersion = "SDK " + UserConfig.hmGetOS(instance);
-        if (getUserConfig().getClientUserId() != 0) {
-            accountsExists++;
-            if (
-                    (UserConfig.isTh("EnableAccountExtendVanilla") || currentAccount < UserConfig.ACC_TO_INIT)
-                            && currentAccount < UserConfig.MAX_ACCOUNT_COUNT
-            )
-                UserConfig.addToHsAccs(currentAccount);
-        }
-        if (UserConfig.isTh("EnableAccountExtendVanilla")
-                && accountsExists == UserConfig.getHsAccs().size()
-                && accountsExists < UserConfig.MAX_ACCOUNT_COUNT) UserConfig.addToHsAccs(accountsExists);
-        if (!UserConfig.getHsAccs().contains(currentAccount)) return;
-
-        if (UserConfig.TDBG) System.out.printf("HEY accountsExists %d accountsCounter %d accountsInit %d A%n", accountsExists, accountsCounter, accountsInit);
-        accountsInit++;
-        if (UserConfig.TDBG) System.out.printf("HEY accountsExists %d accountsCounter %d accountsInit %d B%n", accountsExists, accountsCounter, accountsInit);
-
         String pushString = getRegId();
         String fingerprint = AndroidUtilities.getCertificateSHA256Fingerprint();
 
         int timezoneOffset = (TimeZone.getDefault().getRawOffset() + TimeZone.getDefault().getDSTSavings()) / 1000;
-
+        SharedPreferences mainPreferences;
+        if (currentAccount == 0) {
+            mainPreferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
+        } else {
+            mainPreferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig" + currentAccount, Activity.MODE_PRIVATE);
+        }
+        forceTryIpV6 = mainPreferences.getBoolean("forceTryIpV6", false);
         init(BuildVars.BUILD_VERSION, TLRPC.LAYER, BuildVars.APP_ID, deviceModel, systemVersion, appVersion, langCode, systemLangCode, configPath, FileLog.getNetworkLogPath(), pushString, fingerprint, timezoneOffset, getUserConfig().getClientUserId(), enablePushConnection);
     }
 
@@ -388,7 +379,7 @@ public class ConnectionsManager extends BaseController {
     }
 
     public void checkConnection() {
-        native_setIpStrategy(currentAccount, IP_STRATEGY_BYTE);
+        native_setIpStrategy(currentAccount, getIpStrategy());
         native_setNetworkAvailable(currentAccount, ApplicationLoader.isNetworkOnline(), ApplicationLoader.getCurrentNetworkType(), ApplicationLoader.isConnectionSlow());
     }
 
@@ -407,36 +398,16 @@ public class ConnectionsManager extends BaseController {
         if (preferences.getBoolean("proxy_enabled", false) && !TextUtils.isEmpty(proxyAddress)) {
             native_setProxySettings(currentAccount, proxyAddress, proxyPort, proxyUsername, proxyPassword, proxySecret);
         }
-        String installer = "com.android.vending";
-        String packageId = "org.telegram.messenger";
+        String installer = BuildVars.BUILD_VENDOR;
+        String packageId = BuildVars.BUILD_DUROV;
 
-//        String installer = "";
-//        try {
-//            installer = ApplicationLoader.applicationContext.getPackageManager().getInstallerPackageName(ApplicationLoader.applicationContext.getPackageName());
-//        } catch (Throwable ignore) {
-//
-//        }
-//        if (installer == null) {
-//            installer = "";
-//        }
-//        String packageId = "";
-//        try {
-//            packageId = ApplicationLoader.applicationContext.getPackageName();
-//        } catch (Throwable ignore) {
-//
-//        }
-//        if (packageId == null) {
-//            packageId = "";
-//        }
         native_init(currentAccount, version, layer, apiId, deviceModel, systemVersion, appVersion, langCode, systemLangCode, configPath, logPath, regId, cFingerprint, installer, packageId, timezoneOffset, userId, enablePushConnection, ApplicationLoader.isNetworkOnline(), ApplicationLoader.getCurrentNetworkType());
         checkConnection();
     }
 
     public static void setLangCode(String langCode) {
         langCode = langCode.replace('_', '-').toLowerCase();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ConnectionsManager setLangCode [%d] `%s` %n", a, langCode);
+        for (int a : SharedConfig.activeAccounts) {
             native_setLangCode(a, langCode);
         }
     }
@@ -449,25 +420,21 @@ public class ConnectionsManager extends BaseController {
         if (TextUtils.isEmpty(pushString)) {
             pushString = SharedConfig.pushStringStatus = "__FIREBASE_GENERATING_SINCE_" + getInstance(0).getCurrentTime() + "__";
         }
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ConnectionsManager setRegId [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             native_setRegId(a, pushString);
         }
     }
 
     public static void setSystemLangCode(String langCode) {
         langCode = langCode.replace('_', '-').toLowerCase();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ConnectionsManager setSystemLangCode [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             native_setSystemLangCode(a, langCode);
         }
     }
 
     public void switchBackend(boolean restart) {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        preferences.edit().remove("language_showed2").commit();
+        preferences.edit().remove("language_showed2").apply();
         native_switchBackend(currentAccount, restart);
     }
 
@@ -656,8 +623,12 @@ public class ConnectionsManager extends BaseController {
         });
     }
 
-    public static void onProxyError() {
-        AndroidUtilities.runOnUIThread(() -> NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needShowAlert, 3));
+    public static void onProxyError(int instanceNum) {
+        if (UserConfig.selectedAccount != instanceNum) return;
+
+        AndroidUtilities.runOnUIThread(() -> {
+            NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.needShowAlert, 3);
+        });
     }
 
     public static void getHostByName(String hostName, long address) {
@@ -723,17 +694,18 @@ public class ConnectionsManager extends BaseController {
         }
 
         int ac = 0;
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+        for (int a : SharedConfig.activeAccounts) {
             if (enabled && !TextUtils.isEmpty(address)) {
                 native_setProxySettings(a, address, port, username, password, secret);
             } else {
                 native_setProxySettings(a, "", 1080, "", "", "");
             }
-            AccountInstance accountInstance = AccountInstance.getInstance(a);
-            if (accountInstance.getUserConfig().isClientActivated() || ac < UserConfig.ACC_TO_INIT) {
+            if (ac < Math.min(3, SharedConfig.activeAccounts.size())) {
                 ac++;
-                if (UserConfig.TDBG) System.out.printf("HEY ConnectionsManager setProxySettings [%d]%n", a);
-                accountInstance.getMessagesController().checkPromoInfo(true);
+                AccountInstance accountInstance = AccountInstance.getInstance(a);
+                if (accountInstance.getUserConfig().isClientActivated()) {
+                    accountInstance.getMessagesController().checkPromoInfo(true);
+                }
             }
         }
     }
@@ -764,6 +736,7 @@ public class ConnectionsManager extends BaseController {
     public static native void native_setSystemLangCode(int currentAccount, String langCode);
     public static native void native_seSystemLangCode(int currentAccount, String langCode);
     public static native void native_setJava(boolean useJavaByteBuffers);
+    public static native void native_setJava(int instanceNum);
     public static native void native_setPushConnectionEnabled(int currentAccount, boolean value);
     public static native void native_applyDnsConfig(int currentAccount, long address, String phone, int date);
     public static native long native_checkProxy(int currentAccount, String address, int port, String username, String password, String secret, RequestTimeDelegate requestTimeDelegate);
@@ -786,7 +759,7 @@ public class ConnectionsManager extends BaseController {
     }
 
     @SuppressLint("NewApi")
-    protected static byte getIpStrategy() {
+    protected byte getIpStrategy() {
         if (Build.VERSION.SDK_INT < 19) {
             return USE_IPV4_ONLY;
         }
@@ -852,6 +825,9 @@ public class ConnectionsManager extends BaseController {
                 }
             }
             if (hasIpv6) {
+                if (forceTryIpV6) {
+                    return USE_IPV6_ONLY;
+                }
                 if (hasStrangeIpv4) {
                     return USE_IPV4_IPV6_RANDOM;
                 }
@@ -1343,58 +1319,15 @@ public class ConnectionsManager extends BaseController {
         }
 
         protected NativeByteBuffer doInBackground(Void... voids) {
-            try {
-//                if (native_isTestBackend(currentAccount) != 0) {
-//                    throw new Exception("test backend");
-//                }
-//                firebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-//                String currentValue = firebaseRemoteConfig.getString("ipconfigv3");
-//                if (BuildVars.LOGS_ENABLED) {
-//                    FileLog.d("current firebase value = " + currentValue);
-//                }
-
-//                firebaseRemoteConfig.fetch(0).addOnCompleteListener(finishedTask -> {
-//                    final boolean success = finishedTask.isSuccessful();
-                    Utilities.stageQueue.postRunnable(() -> {
-//                        if (success) {
-//                            firebaseRemoteConfig.activate().addOnCompleteListener(finishedTask2 -> {
-//                                currentTask = null;
-//                                String config = firebaseRemoteConfig.getString("ipconfigv3");
-//                                if (!TextUtils.isEmpty(config)) {
-//                                    byte[] bytes = Base64.decode(config, Base64.DEFAULT);
-//                                    try {
-//                                        NativeByteBuffer buffer = new NativeByteBuffer(bytes.length);
-//                                        buffer.writeBytes(bytes);
-//                                        int date = (int) (firebaseRemoteConfig.getInfo().getFetchTimeMillis() / 1000);
-//                                        native_applyDnsConfig(currentAccount, buffer.address, AccountInstance.getInstance(currentAccount).getUserConfig().getClientPhone(), date);
-//                                    } catch (Exception e) {
-//                                        FileLog.e(e);
-//                                    }
-//                                } else {
-                                    if (BuildVars.LOGS_ENABLED) {
-                                        FileLog.d("failed to get firebase result");
-                                        FileLog.d("start dns txt task");
-                                    }
-                                    DnsTxtLoadTask task = new DnsTxtLoadTask(currentAccount);
-                                    task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
-                                    currentTask = task;
-//                                }
-                            });
-//                        }
-//                    });
-//                });
-            } catch (Throwable e) {
-                Utilities.stageQueue.postRunnable(() -> {
-                    if (BuildVars.LOGS_ENABLED) {
-                        FileLog.d("failed to get firebase result");
-                        FileLog.d("start dns txt task");
-                    }
-                    DnsTxtLoadTask task = new DnsTxtLoadTask(currentAccount);
-                    task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
-                    currentTask = task;
-                });
-                FileLog.e(e);
-            }
+            Utilities.stageQueue.postRunnable(() -> {
+                if (BuildVars.LOGS_ENABLED) {
+                    FileLog.d("failed to get firebase result");
+                    FileLog.d("start dns txt task");
+                }
+                DnsTxtLoadTask task = new DnsTxtLoadTask(currentAccount);
+                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null, null, null);
+                currentTask = task;
+            });
             return null;
         }
 

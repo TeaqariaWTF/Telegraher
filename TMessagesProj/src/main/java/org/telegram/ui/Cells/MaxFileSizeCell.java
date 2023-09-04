@@ -12,7 +12,6 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -20,8 +19,6 @@ import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.LocaleController;
@@ -98,7 +95,7 @@ public class MaxFileSizeCell extends FrameLayout {
                             progress -= 0.25f;
                             size += 90 * 1024 * 1024;
 
-                            size += (FileLoader.MAX_FILE_SIZE - size) * (progress / 0.25f);
+                            size += (FileLoader.DEFAULT_MAX_FILE_SIZE - size) * (progress / 0.25f);
                         }
                     }
                 }
@@ -121,12 +118,6 @@ public class MaxFileSizeCell extends FrameLayout {
 
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
         setAccessibilityDelegate(seekBarView.getSeekBarAccessibilityDelegate());
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
-        if (this.sizeTextView != null) this.sizeTextView.setTypeface(font);
     }
 
     protected void didChangedSizeValue(int value) {
@@ -205,7 +196,7 @@ public class MaxFileSizeCell extends FrameLayout {
                     progress += 0.25f;
                     size -= 90 * 1024 * 1024;
 
-                    progress += Math.max(0, size / (float) (FileLoader.MAX_FILE_SIZE - 100 * 1024 * 1024)) * 0.25f;
+                    progress += Math.max(0, size / (float) (FileLoader.DEFAULT_MAX_FILE_SIZE - 100 * 1024 * 1024)) * 0.25f;
                 }
             }
         }

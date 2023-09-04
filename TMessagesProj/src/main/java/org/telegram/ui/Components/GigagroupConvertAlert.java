@@ -20,8 +20,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -42,7 +40,7 @@ public class GigagroupConvertAlert extends BottomSheet {
             super(context);
 
             background = new View(context);
-            background.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+            background.setBackground(Theme.AdaptiveRipple.filledRect(Theme.key_featuredStickers_addButton, 4));
             addView(background, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 16, 16, 16, 16));
 
             textView = new TextView(context);
@@ -53,7 +51,7 @@ public class GigagroupConvertAlert extends BottomSheet {
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
         }
 
@@ -83,7 +81,7 @@ public class GigagroupConvertAlert extends BottomSheet {
         linearLayout.addView(lottieImageView, LayoutHelper.createLinear(160, 160, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 17, 30, 17, 0));
 
         TextView percentTextView = new TextView(context);
-        percentTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        percentTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         percentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         percentTextView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         percentTextView.setText(LocaleController.getString("GigagroupConvertTitle", R.string.GigagroupConvertTitle));

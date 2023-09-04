@@ -14,8 +14,6 @@ import android.text.TextPaint;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.Bitmaps;
 import org.telegram.messenger.FileLoader;
@@ -186,7 +184,7 @@ public class VideoSeekPreviewImage extends View {
                 if (FileLoader.getInstance(currentAccount).isLoadingFile(name)) {
                     path = new File(FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE), document.dc_id + "_" + document.id + ".temp").getAbsolutePath();
                 } else {
-                    path = FileLoader.getPathToAttach(document, false).getAbsolutePath();
+                    path = FileLoader.getInstance(currentAccount).getPathToAttach(document, false).getAbsolutePath();
                 }
                 fileDrawable = new AnimatedFileDrawable(new File(path), true, document.size, document, null, parentObject, 0, currentAccount, true);
             } else {

@@ -31,8 +31,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
@@ -398,7 +396,7 @@ public class WebviewActivity extends BaseFragment {
             messageObject.messageOwner.serializeToStream(serializedData);
             editor.putString(hash + "_m", Utilities.bytesToHex(serializedData.toByteArray()));
             editor.putString(hash + "_link", "https://" + MessagesController.getInstance(messageObject.currentAccount).linkPrefix + "/" + username + (TextUtils.isEmpty(short_name) ? "" : "?game=" + short_name));
-            editor.commit();
+            editor.apply();
             Browser.openUrl(parentActivity, url, false);
             serializedData.cleanup();
         } catch (Exception e) {

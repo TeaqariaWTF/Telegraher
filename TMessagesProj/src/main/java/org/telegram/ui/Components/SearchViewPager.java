@@ -4,20 +4,22 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.DialogObject;
@@ -38,6 +40,8 @@ import org.telegram.ui.Adapters.DialogsSearchAdapter;
 import org.telegram.ui.Adapters.FiltersView;
 import org.telegram.ui.Cells.ContextLinkCell;
 import org.telegram.ui.Cells.DialogCell;
+import org.telegram.ui.Cells.HashtagSearchCell;
+import org.telegram.ui.Cells.ProfileSearchCell;
 import org.telegram.ui.Cells.SharedAudioCell;
 import org.telegram.ui.Cells.SharedDocumentCell;
 import org.telegram.ui.Cells.SharedLinkCell;
@@ -57,6 +61,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     public FrameLayout searchContainer;
     public RecyclerListView searchListView;
     public StickerEmptyView emptyView;
+    private DefaultItemAnimator itemAnimator;
     public DialogsSearchAdapter dialogsSearchAdapter;
     private LinearLayoutManager searchLayoutManager;
     private RecyclerItemsEnterAnimator itemsEnterAnimator;
@@ -70,10 +75,9 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
 
     private final static String actionModeTag = "search_view_pager";
 
-    private static int menuTagCounter = 400;
-    public final static int gotoItemId = menuTagCounter++;
-    public final static int forwardItemId = menuTagCounter++;
-    public final static int deleteItemId = menuTagCounter++;
+    public final static int gotoItemId = 200;
+    public final static int forwardItemId = 201;
+    public final static int deleteItemId = 202;
 
     private ActionBarMenuItem gotoItem;
     private ActionBarMenuItem forwardItem;
@@ -102,7 +106,16 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         this.folderId = folderId;
         parent = fragment;
         this.chatPreviewDelegate = chatPreviewDelegate;
-        dialogsSearchAdapter = new DialogsSearchAdapter(context, type, initialDialogsType) {
+
+        itemAnimator = new DefaultItemAnimator();
+        itemAnimator.setAddDuration(150);
+        itemAnimator.setMoveDuration(350);
+        itemAnimator.setChangeDuration(0);
+        itemAnimator.setRemoveDuration(0);
+        itemAnimator.setMoveInterpolator(new OvershootInterpolator(1.1f));
+        itemAnimator.setTranslationInterpolator(CubicBezierInterpolator.EASE_OUT_QUINT);
+
+        dialogsSearchAdapter = new DialogsSearchAdapter(context, type, initialDialogsType, itemAnimator) {
             @Override
             public void notifyDataSetChanged() {
                 int itemCount = getCurrentItemCount();
@@ -118,7 +131,34 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         };
         fragmentView = (SizeNotifierFrameLayout) fragment.getFragmentView();
 
-        searchListView = new BlurredRecyclerView(context);
+        searchListView = new BlurredRecyclerView(context) {
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                if (dialogsSearchAdapter != null && itemAnimator != null && searchLayoutManager != null && dialogsSearchAdapter.showMoreAnimation) {
+                    canvas.save();
+                    invalidate();
+                    final int lastItemIndex = dialogsSearchAdapter.getItemCount() - 1;
+                    for (int i = 0; i < getChildCount(); ++i) {
+                        View child = getChildAt(i);
+                        if (getChildAdapterPosition(child) == lastItemIndex) {
+                            canvas.clipRect(0, 0, getWidth(), child.getBottom() + child.getTranslationY());
+                            break;
+                        }
+                    }
+                }
+                super.dispatchDraw(canvas);
+                if (dialogsSearchAdapter != null && itemAnimator != null && searchLayoutManager != null && dialogsSearchAdapter.showMoreAnimation) {
+                    canvas.restore();
+                }
+                if (dialogsSearchAdapter != null && dialogsSearchAdapter.showMoreHeader != null) {
+                    canvas.save();
+                    canvas.translate(dialogsSearchAdapter.showMoreHeader.getLeft(), dialogsSearchAdapter.showMoreHeader.getTop() + dialogsSearchAdapter.showMoreHeader.getTranslationY());
+                    dialogsSearchAdapter.showMoreHeader.draw(canvas);
+                    canvas.restore();
+                }
+            }
+        };
+        searchListView.setItemAnimator(itemAnimator);
         searchListView.setPivotY(0);
         searchListView.setAdapter(dialogsSearchAdapter);
         searchListView.setVerticalScrollBarEnabled(true);
@@ -314,7 +354,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
 
             selectedMessagesCountTextView = new NumberTextView(actionMode.getContext());
             selectedMessagesCountTextView.setTextSize(18);
-            selectedMessagesCountTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            selectedMessagesCountTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             selectedMessagesCountTextView.setTextColor(Theme.getColor(Theme.key_actionBarActionModeDefaultIcon));
             actionMode.addView(selectedMessagesCountTextView, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 72, 0, 0, 0));
             selectedMessagesCountTextView.setOnTouchListener((v, event) -> true);
@@ -556,7 +596,14 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
         }
     }
 
-    public void getThemeDescriptors(ArrayList<ThemeDescription> arrayList) {
+    public void getThemeDescriptions(ArrayList<ThemeDescription> arrayList) {
+        for (int i = 0; i < searchListView.getChildCount(); ++i) {
+            View child = searchListView.getChildAt(i);
+            if (child instanceof ProfileSearchCell || child instanceof DialogCell || child instanceof HashtagSearchCell) {
+                arrayList.add(new ThemeDescription(child, ThemeDescription.FLAG_BACKGROUND, null, null, null, null, Theme.key_windowBackgroundWhite));
+            }
+        }
+
         for (int i = 0; i < getChildCount(); i++) {
             if (getChildAt(i) instanceof FilteredSearchView) {
                 arrayList.addAll(((FilteredSearchView) getChildAt(i)).getThemeDescriptions());
@@ -851,7 +898,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     }
 
     public interface ChatPreviewDelegate {
-        void startChatPreview(DialogCell cell);
+        void startChatPreview(RecyclerListView listView, DialogCell cell);
         void move(float dy);
         void finish();
     }

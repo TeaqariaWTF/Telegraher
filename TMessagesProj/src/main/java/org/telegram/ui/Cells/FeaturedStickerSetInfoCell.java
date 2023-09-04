@@ -15,7 +15,6 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -27,8 +26,6 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MediaDataController;
 import org.telegram.messenger.LocaleController;
@@ -83,7 +80,7 @@ public class FeaturedStickerSetInfoCell extends FrameLayout {
         nameTextView = new TextView(context);
         nameTextView.setTextColor(getThemedColor(Theme.key_chat_emojiPanelTrendingTitle));
         nameTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
-        nameTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         nameTextView.setEllipsize(TextUtils.TruncateAt.END);
         nameTextView.setSingleLine(true);
         if (supportRtl) {
@@ -120,7 +117,7 @@ public class FeaturedStickerSetInfoCell extends FrameLayout {
             delButton.setGravity(Gravity.CENTER);
             delButton.setTextColor(getThemedColor(Theme.key_featuredStickers_removeButtonText));
             delButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            delButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            delButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             delButton.setText(LocaleController.getString("StickersRemove", R.string.StickersRemove));
             if (supportRtl) {
                 lp = LayoutHelper.createFrameRelatively(LayoutHelper.WRAP_CONTENT, 28, Gravity.TOP | Gravity.END, 0, 16, 14, 0);
@@ -132,12 +129,6 @@ public class FeaturedStickerSetInfoCell extends FrameLayout {
 
         setWillNotDraw(false);
         updateColors();
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.nameTextView != null) this.nameTextView.setTypeface(font);
-        if (this.infoTextView != null) this.infoTextView.setTypeface(font);
     }
 
     @Override

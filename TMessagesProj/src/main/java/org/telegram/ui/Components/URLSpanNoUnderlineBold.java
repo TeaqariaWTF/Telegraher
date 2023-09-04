@@ -10,8 +10,7 @@ package org.telegram.ui.Components;
 
 import android.text.TextPaint;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.AndroidUtilities;
 
 public class URLSpanNoUnderlineBold extends URLSpanNoUnderline {
 
@@ -22,7 +21,7 @@ public class URLSpanNoUnderlineBold extends URLSpanNoUnderline {
     @Override
     public void updateDrawState(TextPaint ds) {
         super.updateDrawState(ds);
-        ds.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        ds.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         ds.setUnderlineText(false);
     }
 }

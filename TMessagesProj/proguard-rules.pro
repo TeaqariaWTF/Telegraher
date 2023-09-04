@@ -1,8 +1,3 @@
--keep public class com.google.android.gms.* { public *; }
--keepnames @com.google.android.gms.common.annotation.KeepName class *
--keepclassmembernames class * {
-    @com.google.android.gms.common.annotation.KeepName *;
-}
 -keep class org.webrtc.* { *; }
 -keep class org.webrtc.audio.* { *; }
 -keep class org.webrtc.voiceengine.* { *; }
@@ -26,9 +21,6 @@
 -keep class com.google.android.exoplayer2.util.FlacStreamMetadata { *; }
 -keep class com.google.android.exoplayer2.metadata.flac.PictureFrame { *; }
 -keep class com.google.android.exoplayer2.decoder.SimpleOutputBuffer { *; }
-
-# https://developers.google.com/ml-kit/known-issues#android_issues
--keep class com.google.mlkit.nl.languageid.internal.LanguageIdentificationJni { *; }
 
 # Constant folding for resource integers may mean that a resource passed to this method appears to be unused. Keep the method to prevent this from happening.
 -keep class com.google.android.exoplayer2.upstream.RawResourceDataSource {
@@ -100,5 +92,8 @@
 # Use -keep to explicitly keep any other classes shrinking would remove
 -dontoptimize
 -dontobfuscate
+
+# https://github.com/osmdroid/osmdroid/issues/633
 -dontwarn org.osmdroid.tileprovider.modules.NetworkAvailabliltyCheck
+# Osmdroid
 -dontwarn org.osmdroid.**

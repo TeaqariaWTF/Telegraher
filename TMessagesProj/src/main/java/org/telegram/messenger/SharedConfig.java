@@ -19,14 +19,17 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.SparseArray;
+import android.webkit.WebView;
 
 import androidx.annotation.IntDef;
 import androidx.core.content.pm.ShortcutManagerCompat;
 
+import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.SerializedData;
 import org.telegram.tgnet.TLRPC;
@@ -37,11 +40,11 @@ import java.io.RandomAccessFile;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 public class SharedConfig {
     public final static int PASSCODE_TYPE_PIN = 0,
@@ -53,6 +56,10 @@ public class SharedConfig {
             PASSCODE_TYPE_PASSWORD
     })
     public @interface PasscodeType {}
+
+    public final static int SAVE_TO_GALLERY_FLAG_PEER = 1;
+    public final static int SAVE_TO_GALLERY_FLAG_GROUP = 2;
+    public final static int SAVE_TO_GALLERY_FLAG_CHANNELS = 4;
 
     public static String pushString = "";
     public static String pushStringStatus = "";
@@ -94,7 +101,6 @@ public class SharedConfig {
     public static boolean stickersReorderingHintUsed;
     public static boolean disableVoiceAudioEffects;
     private static int lastLocalId = -210000;
-    public static boolean drawSnowInChat;
 
     public static String storageCacheDir;
 
@@ -106,7 +112,7 @@ public class SharedConfig {
     private static final Object sync = new Object();
     private static final Object localIdSync = new Object();
 
-    public static boolean saveToGallery;
+    public static int saveToGalleryFlags;
     public static int mapPreviewType = 2;
     public static boolean chatBubbles = Build.VERSION.SDK_INT >= 30;
     public static boolean autoplayGifs = true;
@@ -123,10 +129,11 @@ public class SharedConfig {
     public static boolean saveStreamMedia = true;
     public static boolean smoothKeyboard = true;
     public static boolean pauseMusicOnRecord = true;
-    public static boolean chatBlur = false;
+    public static boolean chatBlur = true;
     public static boolean noiseSupression;
     public static boolean noStatusBar = true;
     public static boolean forceRtmpStream;
+    public static boolean debugWebView;
     public static boolean sortContactsByName;
     public static boolean sortFilesByName;
     public static boolean shuffleMusic;
@@ -160,7 +167,12 @@ public class SharedConfig {
     public static int fastScrollHintCount = 3;
     public static boolean dontAskManageStorage;
 
-    public static HashSet<Long> shadowBannedHS;
+    public static CopyOnWriteArraySet<Integer> activeAccounts;
+    public static Map<Integer, Map<String, String>> thAccounts;
+    public static Map<Integer, Map<String, String>> thDeviceSpoofing;
+    public static int loginingAccount = -1;
+
+    public static HashMap<Long, String> shadowBannedHM;
 
     static {
         loadConfig();
@@ -239,9 +251,9 @@ public class SharedConfig {
 
                 SharedPreferences preferencesTH = ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editorTH = preferencesTH.edit();
-                editorTH.putString("shadowBannedHS", new Gson().toJson(shadowBannedHS));
-//                System.out.printf("SAVE `%s`%n", new Gson().toJson(shadowBannedHS));
-                editorTH.commit();
+                editorTH.putString("shadowBannedHM", ThePenisMightierThanTheSword.toJson(shadowBannedHM));
+//                editorTH.putString("thAccounts", ThePenisMightierThanTheSword.toJsonThAccounts(thAccounts));
+                editorTH.apply();
 //                System.out.println("preferencesTH saved!");
 
                 if (pendingAppUpdate != null) {
@@ -273,6 +285,95 @@ public class SharedConfig {
             value = lastLocalId--;
         }
         return value;
+    }
+
+    public static void saveAccounts() {
+        FileLog.e("Save accounts: " + activeAccounts, new Exception());
+        ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE).edit()
+                .putString("active_accounts", StringUtils.join(activeAccounts, ","))
+                .apply();
+        saveTHAccounts();
+    }
+
+    public static void saveTHAccounts() {
+        saveTHAccounts(false);
+    }
+
+    public static void saveTHAccounts(boolean reset) {
+        if (thAccounts == null || thAccounts.isEmpty()) {
+            Type thmhm = new TypeToken<Map<Integer, Map<String, Object>>>() {
+            }.getType();
+            thAccounts = new Gson().fromJson(ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Activity.MODE_PRIVATE).getString("thAccounts", "{}"), thmhm);
+        }
+
+        if (reset) thAccounts.clear();
+
+        Integer[] arr = activeAccounts.stream().toArray(Integer[]::new);
+        Arrays.sort(arr);
+
+        for (int a : arr) {
+            if (!thAccounts.containsKey(a)) {
+                thAccounts.put(a, new HashMap<String, String>() {{
+                    put("userId", String.valueOf(UserConfig.getInstance(a).clientUserId));
+                    put("userPhone", PhoneFormat.getInstance().format("+" + UserConfig.getInstance(a).getUserConfig().getCurrentUser().phone));
+                    put("userFName", ofNullable(UserConfig.getInstance(a).getUserConfig().getCurrentUser().first_name).orElse(""));
+                    put("userLName", ofNullable(UserConfig.getInstance(a).getUserConfig().getCurrentUser().last_name).orElse(""));
+                    put("userName", ofNullable(UserConfig.getInstance(a).getUserConfig().getCurrentUser().username).orElse("\uD83E\uDD21"));
+                }});
+            }
+        }
+
+        if (!thAccounts.containsKey(-1)) {
+            thAccounts.put(-1, new HashMap<String, String>() {{
+                put("nextAccountId", String.valueOf(ThePenisMightierThanTheSword.getMaxInternalAccountId(thAccounts) + 1));
+                put("thAccountVersion", "1");
+            }});
+        } else {
+            ThePenisMightierThanTheSword.getMaxInternalAccountId(thAccounts);
+        }
+
+        ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Context.MODE_PRIVATE).edit()
+                .putString("thAccounts", ThePenisMightierThanTheSword.toJsonNestedMaps(thAccounts))
+                .apply();
+        saveTHDeviceSpoofing(reset);
+    }
+
+    public static void saveTHDeviceSpoofing() {
+        saveTHDeviceSpoofing(false);
+    }
+
+    public static void saveTHDeviceSpoofing(boolean reset) {
+        if (thDeviceSpoofing == null || thDeviceSpoofing.isEmpty()) {
+            Type thmhm = new TypeToken<Map<Integer, Map<String, String>>>() {
+            }.getType();
+            thDeviceSpoofing = new Gson().fromJson(ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Activity.MODE_PRIVATE).getString("thDeviceSpoofing", "{}"), thmhm);
+        }
+
+        if (reset) thDeviceSpoofing.clear();
+
+        if (!thDeviceSpoofing.containsKey(-1)) {
+            thDeviceSpoofing.put(-1,
+                    new HashMap<String, String>() {{
+                        put("deviceBrand", Build.MANUFACTURER);
+                        put("deviceModel", Build.MODEL);
+                        put("deviceSDK", Integer.valueOf(Build.VERSION.SDK_INT).toString());
+                    }});
+        }
+
+        Set<Integer> ids;
+        if ((ids = thAccounts.keySet()).isEmpty()) ids = activeAccounts;
+
+        for (int a : ids) {
+            if (!thDeviceSpoofing.containsKey(a)) {
+                thDeviceSpoofing.put(a, new HashMap<String, String>() {{
+                    putAll(thDeviceSpoofing.get(-1));
+                }});
+            }
+        }
+
+        ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Context.MODE_PRIVATE).edit()
+                .putString("thDeviceSpoofing", ThePenisMightierThanTheSword.toJsonNestedMaps(thDeviceSpoofing))
+                .apply();
     }
 
     public static void loadConfig() {
@@ -318,45 +419,15 @@ public class SharedConfig {
                 passcodeSalt = new byte[0];
             }
             lastUpdateCheckTime = preferences.getLong("appUpdateCheckTime", System.currentTimeMillis());
-            try {
-                String update = preferences.getString("appUpdate", null);
-                if (update != null) {
-                    pendingAppUpdateBuildVersion = preferences.getInt("appUpdateBuild", BuildVars.BUILD_VERSION);
-                    byte[] arr = Base64.decode(update, Base64.DEFAULT);
-                    if (arr != null) {
-                        SerializedData data = new SerializedData(arr);
-                        pendingAppUpdate = (TLRPC.TL_help_appUpdate) TLRPC.help_AppUpdate.TLdeserialize(data, data.readInt32(false), false);
-                        data.cleanup();
-                    }
-                }
-                if (pendingAppUpdate != null) {
-                    long updateTime = 0;
-                    int updateVersion = 0;
-                    String updateVersionString = null;
-                    try {
-                        PackageInfo packageInfo = ApplicationLoader.applicationContext.getPackageManager().getPackageInfo(ApplicationLoader.applicationContext.getPackageName(), 0);
-                        updateVersion = packageInfo.versionCode / 100;
-                        updateVersionString = BuildVars.BUILD_VERSION_STRING;
-                    } catch (Exception e) {
-                        FileLog.e(e);
-                    }
-                    if (updateVersion == 0) {
-                        updateVersion = BuildVars.BUILD_VERSION;
-                    }
-                    if (updateVersionString == null) {
-                        updateVersionString = BuildVars.BUILD_VERSION_STRING;
-                    }
-                    if (pendingAppUpdateBuildVersion != updateVersion || pendingAppUpdate.version == null || updateVersionString.compareTo(pendingAppUpdate.version) >= 0) {
-                        pendingAppUpdate = null;
-                        AndroidUtilities.runOnUIThread(SharedConfig::saveConfig);
-                    }
-                }
-            } catch (Exception e) {
-                FileLog.e(e);
-            }
 
             preferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
-            saveToGallery = preferences.getBoolean("save_gallery", false);
+            boolean saveToGalleryLegacy = preferences.getBoolean("save_gallery", false);
+            if (saveToGalleryLegacy && BuildVars.NO_SCOPED_STORAGE) {
+                saveToGalleryFlags = SAVE_TO_GALLERY_FLAG_PEER + SAVE_TO_GALLERY_FLAG_CHANNELS + SAVE_TO_GALLERY_FLAG_GROUP;
+                preferences.edit().remove("save_gallery").putInt("save_gallery_flags", saveToGalleryFlags).apply();
+            } else {
+                saveToGalleryFlags = preferences.getInt("save_gallery_flags", 0);
+            }
             autoplayGifs = preferences.getBoolean("autoplay_gif", true);
             autoplayVideo = preferences.getBoolean("autoplay_video", true);
             mapPreviewType = preferences.getInt("mapPreviewType", 2);
@@ -378,7 +449,7 @@ public class SharedConfig {
             saveStreamMedia = preferences.getBoolean("saveStreamMedia", true);
             smoothKeyboard = preferences.getBoolean("smoothKeyboard2", true);
             pauseMusicOnRecord = preferences.getBoolean("pauseMusicOnRecord", false);
-            chatBlur = preferences.getBoolean("chatBlur", false);
+            chatBlur = preferences.getBoolean("chatBlur", true);
             streamAllVideo = preferences.getBoolean("streamAllVideo", BuildVars.DEBUG_VERSION);
             streamMkv = preferences.getBoolean("streamMkv", false);
             suggestStickers = preferences.getInt("suggestStickers", 0);
@@ -394,6 +465,7 @@ public class SharedConfig {
             keepMedia = preferences.getInt("keep_media", 2);
             noStatusBar = preferences.getBoolean("noStatusBar", true);
             forceRtmpStream = preferences.getBoolean("forceRtmpStream", false);
+            debugWebView = preferences.getBoolean("debugWebView", false);
             lastKeepMediaCheckTime = preferences.getInt("lastKeepMediaCheckTime", 0);
             lastLogsCheckTime = preferences.getInt("lastLogsCheckTime", 0);
             searchMessagesAsListHintShows = preferences.getInt("searchMessagesAsListHintShows", 0);
@@ -409,21 +481,36 @@ public class SharedConfig {
             messageSeenHintCount = preferences.getInt("messageSeenCount", 3);
             emojiInteractionsHintCount = preferences.getInt("emojiInteractionsHintCount", 3);
             dayNightThemeSwitchHintCount = preferences.getInt("dayNightThemeSwitchHintCount", 3);
+            activeAccounts = Arrays.stream(preferences.getString("active_accounts", "").split(",")).filter(StringUtils::isNotBlank).map(Integer::parseInt).collect(Collectors.toCollection(CopyOnWriteArraySet::new));
+            if (!preferences.contains("activeAccountsLoaded")) {
+                if (!SharedConfig.activeAccounts.isEmpty()) {
+                    preferences.edit().putString("active_accounts", StringUtils.join(activeAccounts, ",")).apply();
+                }
+                preferences.edit().putBoolean("activeAccountsLoaded", true).apply();
+            }
             mediaColumnsCount = preferences.getInt("mediaColumnsCount", 3);
             fastScrollHintCount = preferences.getInt("fastScrollHintCount", 3);
             dontAskManageStorage = preferences.getBoolean("dontAskManageStorage", false);
-            drawSnowInChat = preferences.getBoolean("drawSnowInChat", false);
 
             preferences = ApplicationLoader.applicationContext.getSharedPreferences("Notifications", Activity.MODE_PRIVATE);
             showNotificationsForAllAccounts = preferences.getBoolean("AllAccounts", true);
 
-            preferences = ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Activity.MODE_PRIVATE);
-            Type lhs = new TypeToken<HashSet<Long>>() {}.getType();
-            shadowBannedHS = new Gson().fromJson(preferences.getString("shadowBannedHS", "[]"), lhs);
-//            System.out.printf("LOAD `%s`%n", preferences.getString("shadowBannedHS", "[]"));
-//            System.out.println("preferencesTH loaded!");
+            preferences = ApplicationLoader.applicationContext.getSharedPreferences("telegraher", Context.MODE_PRIVATE);
+            Type lhm = new TypeToken<HashMap<Long, String>>() {}.getType();
+            shadowBannedHM = new Gson().fromJson(preferences.getString("shadowBannedHM", "{}"), lhm);
+            Type thmhm = new TypeToken<Map<Integer, Map<String, String>>>() {}.getType();
+            thAccounts=new Gson().fromJson(preferences.getString("thAccounts","{}"),thmhm);
+            thDeviceSpoofing=new Gson().fromJson(preferences.getString("thDeviceSpoofing","{}"),thmhm);
 
             configLoaded = true;
+
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && debugWebView) {
+                    WebView.setWebContentsDebuggingEnabled(true);
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
         }
     }
 
@@ -467,24 +554,15 @@ public class SharedConfig {
         getCountryLangs();
     }
 
-    public static HashSet<Long> getShadowBannedHS() {
-        if (shadowBannedHS == null) shadowBannedHS = new HashSet<>();
-        return shadowBannedHS;
-    }
-
-    public static boolean isShadowBanned(Long id) {
-//        System.out.printf("isShadowBanned `%s`%n", "the id");
-        if (shadowBannedHS == null) {
-            shadowBannedHS = new HashSet<>();
-            return false;
-        }
-        return isShadowBanned(id);
+    public static HashMap<Long, String> getShadowBannedHM() {
+        if (shadowBannedHM == null) shadowBannedHM = new HashMap<>();
+        return shadowBannedHM;
     }
 
     public static boolean isShadowBanned(TLRPC.Message m) {
 //        System.out.printf("isShadowBanned `%s`%n", "the message");
-        if (shadowBannedHS == null) {
-            shadowBannedHS = new HashSet<>();
+        if (shadowBannedHM == null) {
+            shadowBannedHM = new HashMap<>();
             return false;
         }
         return isShadowBanned(m.from_id.channel_id) || isShadowBanned(m.from_id.chat_id) || isShadowBanned(m.from_id.user_id);
@@ -492,8 +570,8 @@ public class SharedConfig {
 
     public static boolean isShadowBanned(TLRPC.Updates m) {
 //        System.out.printf("isShadowBanned `%s`%n", "the Updates");
-        if (shadowBannedHS == null) {
-            shadowBannedHS = new HashSet<>();
+        if (shadowBannedHM == null) {
+            shadowBannedHM = new HashMap<>();
             return false;
         }
         return m instanceof TLRPC.TL_updateShortChatMessage ? isShadowBanned(m.from_id) : isShadowBanned(m.user_id);
@@ -501,23 +579,23 @@ public class SharedConfig {
 
     public static boolean isShadowBanned(long id) {
 //        System.out.printf("isShadowBanned `%d`%n", id);
-        if (shadowBannedHS == null) {
-            shadowBannedHS = new HashSet<>();
+        if (shadowBannedHM == null) {
+            shadowBannedHM = new HashMap<>();
             return false;
         }
-        return shadowBannedHS.contains(id < 0L ? -id : id);
+        return shadowBannedHM.containsKey(id < 0L ? -id : id);
     }
 
-    public static void addShadowBanned(long id) {
+    public static void addShadowBanned(long id, String name) {
 //        System.out.printf("addShadowBanned `%d`%n", id);
-        if (shadowBannedHS == null) shadowBannedHS = new HashSet<>();
-        shadowBannedHS.add(id < 0L ? -id : id);
+        if (shadowBannedHM == null) shadowBannedHM = new HashMap<>();
+        shadowBannedHM.put(id < 0L ? -id : id, name);
     }
 
     public static void delShadowBanned(long id) {
 //        System.out.printf("delShadowBanned `%d`%n", id);
-        if (shadowBannedHS == null) shadowBannedHS = new HashSet<>();
-        shadowBannedHS.remove(id < 0L ? -id : id);
+        if (shadowBannedHM == null) shadowBannedHM = new HashMap<>();
+        shadowBannedHM.remove(id < 0L ? -id : id);
     }
 
     public static HashMap<String, String> getCountryLangs() {
@@ -538,6 +616,7 @@ public class SharedConfig {
     }
 
     public static boolean isAppUpdateAvailable() {
+        if (true) return false;
         if (pendingAppUpdate == null || pendingAppUpdate.document == null || !BuildVars.isStandaloneApp()) {
             return false;
         }
@@ -553,6 +632,7 @@ public class SharedConfig {
     }
 
     public static boolean setNewAppVersionAvailable(TLRPC.TL_help_appUpdate update) {
+        if (true) return false;
         String updateVersionString = null;
         int versionCode = 0;
         try {
@@ -642,7 +722,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("suggestStickers", suggestStickers);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setSearchMessagesAsListUsed(boolean value) {
@@ -650,7 +730,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("searchMessagesAsListUsed", searchMessagesAsListUsed);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setStickersReorderingHintUsed(boolean value) {
@@ -658,28 +738,28 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("stickersReorderingHintUsed", stickersReorderingHintUsed);
-        editor.commit();
+        editor.apply();
     }
 
     public static void increaseTextSelectionHintShowed() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("textSelectionHintShows", ++textSelectionHintShows);
-        editor.commit();
+        editor.apply();
     }
 
     public static void removeTextSelectionHint() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("textSelectionHintShows", 3);
-        editor.commit();
+        editor.apply();
     }
 
     public static void increaseScheduledOrNoSuoundHintShowed() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("scheduledOrNoSoundHintShows", ++scheduledOrNoSoundHintShows);
-        editor.commit();
+        editor.apply();
     }
 
     public static void forwardingOptionsHintHintShowed() {
@@ -687,35 +767,35 @@ public class SharedConfig {
         SharedPreferences.Editor editor = preferences.edit();
         forwardingOptionsHintShown = true;
         editor.putBoolean("forwardingOptionsHintShown", forwardingOptionsHintShown);
-        editor.commit();
+        editor.apply();
     }
 
-    public static void removeScheduledOrNoSuoundHint() {
+    public static void removeScheduledOrNoSoundHint() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("scheduledOrNoSoundHintShows", 3);
-        editor.commit();
+        editor.apply();
     }
 
     public static void increaseLockRecordAudioVideoHintShowed() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("lockRecordAudioVideoHint", ++lockRecordAudioVideoHint);
-        editor.commit();
+        editor.apply();
     }
 
     public static void removeLockRecordAudioVideoHint() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("lockRecordAudioVideoHint", 3);
-        editor.commit();
+        editor.apply();
     }
 
     public static void increaseSearchAsListHintShows() {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("searchMessagesAsListHintShows", ++searchMessagesAsListHintShows);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setKeepMedia(int value) {
@@ -723,7 +803,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("keep_media", keepMedia);
-        editor.commit();
+        editor.apply();
     }
 
     public static void checkLogsToDelete() {
@@ -747,7 +827,7 @@ public class SharedConfig {
             SharedPreferences preferences = MessagesController.getGlobalMainSettings();
             SharedPreferences.Editor editor = preferences.edit();
             editor.putInt("lastLogsCheckTime", lastLogsCheckTime);
-            editor.commit();
+            editor.apply();
         });
     }
 
@@ -793,7 +873,7 @@ public class SharedConfig {
             SharedPreferences preferences = MessagesController.getGlobalMainSettings();
             SharedPreferences.Editor editor = preferences.edit();
             editor.putInt("lastKeepMediaCheckTime", lastKeepMediaCheckTime);
-            editor.commit();
+            editor.apply();
         });
     }
 
@@ -802,15 +882,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("disableVoiceAudioEffects", disableVoiceAudioEffects);
-        editor.commit();
-    }
-
-    public static void toggleDrawSnowInChat() {
-        drawSnowInChat = !drawSnowInChat;
-        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("drawSnowInChat", drawSnowInChat);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleNoiseSupression() {
@@ -818,7 +890,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("noiseSupression", noiseSupression);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleForceRTMPStream() {
@@ -829,12 +901,23 @@ public class SharedConfig {
         editor.apply();
     }
 
+    public static void toggleDebugWebView() {
+        debugWebView = !debugWebView;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            WebView.setWebContentsDebuggingEnabled(debugWebView);
+        }
+        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("debugWebView", debugWebView);
+        editor.apply();
+    }
+
     public static void toggleNoStatusBar() {
         noStatusBar = !noStatusBar;
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("noStatusBar", noStatusBar);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleLoopStickers() {
@@ -842,7 +925,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("loopStickers", loopStickers);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleBigEmoji() {
@@ -850,7 +933,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("allowBigEmoji", allowBigEmoji);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setPlaybackOrderType(int type) {
@@ -869,7 +952,7 @@ public class SharedConfig {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("shuffleMusic", shuffleMusic);
         editor.putBoolean("playOrderReversed", playOrderReversed);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setRepeatMode(int mode) {
@@ -880,15 +963,17 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("repeatMode", repeatMode);
-        editor.commit();
+        editor.apply();
     }
 
-    public static void toggleSaveToGallery() {
-        saveToGallery = !saveToGallery;
+    public static void toggleSaveToGalleryFlag(int flag) {
+        if ((saveToGalleryFlags & flag) != 0) {
+            saveToGalleryFlags &= ~flag;
+        } else {
+            saveToGalleryFlags |= flag;
+        }
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("save_gallery", saveToGallery);
-        editor.commit();
+        preferences.edit().putInt("save_gallery_flags", saveToGalleryFlags).apply();
         ImageLoader.getInstance().checkMediaPaths();
         ImageLoader.getInstance().getCacheOutQueue().postRunnable(() -> {
             checkSaveToGalleryFiles();
@@ -900,7 +985,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("autoplay_gif", autoplayGifs);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setUseThreeLinesLayout(boolean value) {
@@ -908,7 +993,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("useThreeLinesLayout", useThreeLinesLayout);
-        editor.commit();
+        editor.apply();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.dialogsNeedReload, true);
     }
 
@@ -917,7 +1002,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("archiveHidden", archiveHidden);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleAutoplayVideo() {
@@ -925,7 +1010,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("autoplay_video", autoplayVideo);
-        editor.commit();
+        editor.apply();
     }
 
     public static boolean isSecretMapPreviewSet() {
@@ -938,7 +1023,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("mapPreviewType", mapPreviewType);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setNoSoundHintShowed(boolean value) {
@@ -949,7 +1034,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("noSoundHintShowed", noSoundHintShowed);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toogleRaiseToSpeak() {
@@ -957,7 +1042,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("raise_to_speak", raiseToSpeak);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleCustomTabs() {
@@ -965,7 +1050,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("custom_tabs", customTabs);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleDirectShare() {
@@ -973,7 +1058,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("direct_share", directShare);
-        editor.commit();
+        editor.apply();
         ShortcutManagerCompat.removeAllDynamicShortcuts(ApplicationLoader.applicationContext);
         MediaDataController.getInstance(UserConfig.selectedAccount).buildShortcuts();
     }
@@ -983,7 +1068,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("streamMedia", streamMedia);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleSortContactsByName() {
@@ -991,7 +1076,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("sortContactsByName", sortContactsByName);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleSortFilesByName() {
@@ -999,7 +1084,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("sortFilesByName", sortFilesByName);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleStreamAllVideo() {
@@ -1007,7 +1092,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("streamAllVideo", streamAllVideo);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleStreamMkv() {
@@ -1015,7 +1100,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("streamMkv", streamMkv);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleSaveStreamMedia() {
@@ -1023,7 +1108,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("saveStreamMedia", saveStreamMedia);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleSmoothKeyboard() {
@@ -1031,7 +1116,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("smoothKeyboard2", smoothKeyboard);
-        editor.commit();
+        editor.apply();
     }
 
     public static void togglePauseMusicOnRecord() {
@@ -1039,7 +1124,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("pauseMusicOnRecord", pauseMusicOnRecord);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleChatBlur() {
@@ -1047,7 +1132,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("chatBlur", chatBlur);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleInappCamera() {
@@ -1055,7 +1140,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("inappCamera", inappCamera);
-        editor.commit();
+        editor.apply();
     }
 
     public static void toggleRoundCamera16to9() {
@@ -1063,7 +1148,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("roundCamera16to9", roundCamera16to9);
-        editor.commit();
+        editor.apply();
     }
 
     public static void setDistanceSystemType(int type) {
@@ -1071,7 +1156,7 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt("distanceSystemType", distanceSystemType);
-        editor.commit();
+        editor.apply();
         LocaleController.resetImperialSystemType();
     }
 
@@ -1129,7 +1214,7 @@ public class SharedConfig {
             serializedData.writeString(info.secret != null ? info.secret : "");
         }
         SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("mainconfig", Activity.MODE_PRIVATE);
-        preferences.edit().putString("proxy_list", Base64.encodeToString(serializedData.toByteArray(), Base64.NO_WRAP)).commit();
+        preferences.edit().putString("proxy_list", Base64.encodeToString(serializedData.toByteArray(), Base64.NO_WRAP)).apply();
         serializedData.cleanup();
     }
 
@@ -1160,7 +1245,7 @@ public class SharedConfig {
             editor.putInt("proxy_port", 1080);
             editor.putBoolean("proxy_enabled", false);
             editor.putBoolean("proxy_enabled_calls", false);
-            editor.commit();
+            editor.apply();
             if (enabled) {
                 ConnectionsManager.setProxySettings(false, "", 0, "", "", "");
             }
@@ -1178,7 +1263,7 @@ public class SharedConfig {
                 File videoPath = new File(telegramPath, "Telegram Video");
                 videoPath.mkdir();
 
-                if (saveToGallery) {
+                if (saveToGalleryFlags != 0 || !BuildVars.NO_SCOPED_STORAGE) {
                     if (imagePath.isDirectory()) {
                         new File(imagePath, ".nomedia").delete();
                     }
@@ -1278,7 +1363,7 @@ public class SharedConfig {
                 devicePerformanceClass = PERFORMANCE_CLASS_HIGH;
             }
             if (BuildVars.LOGS_ENABLED) {
-                FileLog.d("device performance info (cpu_count = " + cpuCount + ", freq = " + maxCpuFreq + ", memoryClass = " + memoryClass + ", android version " + androidVersion + ")");
+                FileLog.d("device performance info selected_class = " + devicePerformanceClass + " (cpu_count = " + cpuCount + ", freq = " + maxCpuFreq + ", memoryClass = " + memoryClass + ", android version " + androidVersion + ")");
             }
         }
 
@@ -1305,9 +1390,9 @@ public class SharedConfig {
     }
 
     public static boolean canBlurChat() {
-//        return getDevicePerformanceClass() == PERFORMANCE_CLASS_HIGH;
-        return true;
+        return getDevicePerformanceClass() == PERFORMANCE_CLASS_HIGH;
     }
+
     public static boolean chatBlurEnabled() {
         return canBlurChat() && chatBlur;
     }

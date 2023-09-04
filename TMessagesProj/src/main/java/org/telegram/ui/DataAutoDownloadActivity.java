@@ -24,11 +24,14 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
@@ -49,10 +52,6 @@ import org.telegram.ui.Components.SlideChooseView;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class DataAutoDownloadActivity extends BaseFragment {
 
@@ -204,7 +203,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                 } else {
                     DownloadController.getInstance(currentAccount).currentRoamingPreset = currentPresetNum;
                 }
-                editor.commit();
+                editor.apply();
 
                 cell.setChecked(!checked);
                 DownloadController.getInstance(currentAccount).checkAutodownloadSettings();
@@ -280,7 +279,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                     } else {
                         DownloadController.getInstance(currentAccount).currentRoamingPreset = currentPresetNum;
                     }
-                    editor.commit();
+                    editor.apply();
 
                     cell.setChecked(!checked);
                     RecyclerView.ViewHolder holder = listView.findContainingViewHolder(view);
@@ -456,7 +455,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                     textView.setTextColor(Theme.getColor(Theme.key_dialogTextBlue2));
                     textView.setGravity(Gravity.CENTER);
-                    textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     textView.setText(LocaleController.getString("Cancel", R.string.Cancel).toUpperCase());
                     textView.setPadding(AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10), 0);
                     buttonsLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.TOP | Gravity.LEFT));
@@ -466,7 +465,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                     textView.setTextColor(Theme.getColor(Theme.key_dialogTextBlue2));
                     textView.setGravity(Gravity.CENTER);
-                    textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     textView.setText(LocaleController.getString("Save", R.string.Save).toUpperCase());
                     textView.setPadding(AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10), 0);
                     buttonsLayout.addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 36, Gravity.TOP | Gravity.RIGHT));
@@ -509,7 +508,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                         } else {
                             DownloadController.getInstance(currentAccount).currentRoamingPreset = currentPresetNum;
                         }
-                        editor.commit();
+                        editor.apply();
                         builder.getDismissRunnable().run();
 
                         RecyclerView.ViewHolder holder = listView.findContainingViewHolder(view);
@@ -583,8 +582,8 @@ public class DataAutoDownloadActivity extends BaseFragment {
                     break;
                 }
             }
-            int size1 = (video1 ? o1.sizes[index1] : 0) + (doc1 ? o1.sizes[index2] : 0);
-            int size2 = (video2 ? o2.sizes[index1] : 0) + (doc2 ? o2.sizes[index2] : 0);
+            long size1 = (video1 ? o1.sizes[index1] : 0) + (doc1 ? o1.sizes[index2] : 0);
+            long size2 = (video2 ? o2.sizes[index1] : 0) + (doc2 ? o2.sizes[index2] : 0);
             if (size1 > size2) {
                 return 1;
             } else if (size1 < size2) {
@@ -698,7 +697,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                     } else {
                         preset = DownloadController.getInstance(currentAccount).getCurrentRoamingPreset();
                     }
-                    int maxSize = preset.sizes[DownloadController.typeToIndex(type)];
+                    long maxSize = preset.sizes[DownloadController.typeToIndex(type)];
 
                     int count = 0;
                     StringBuilder builder = new StringBuilder();
@@ -793,7 +792,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                 case 0: {
                     TextCheckCell cell = new TextCheckCell(mContext);
                     cell.setColors(Theme.key_windowBackgroundCheckText, Theme.key_switchTrackBlue, Theme.key_switchTrackBlueChecked, Theme.key_switchTrackBlueThumb, Theme.key_switchTrackBlueThumbChecked);
-                    cell.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+                    cell.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
                     cell.setHeight(56);
                     view = cell;
                     break;
@@ -830,7 +829,7 @@ public class DataAutoDownloadActivity extends BaseFragment {
                         }
                         SharedPreferences.Editor editor = MessagesController.getMainSettings(currentAccount).edit();
                         editor.putInt(key2, currentPresetNum);
-                        editor.commit();
+                        editor.apply();
                         DownloadController.getInstance(currentAccount).checkAutodownloadSettings();
                         for (int a = 0; a < 3; a++) {
                             RecyclerView.ViewHolder holder = listView.findViewHolderForAdapterPosition(photosRow + a);

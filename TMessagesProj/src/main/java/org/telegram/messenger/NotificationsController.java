@@ -34,8 +34,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Build;
@@ -43,7 +41,6 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
@@ -59,7 +56,6 @@ import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
 import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-
 import org.telegram.messenger.support.LongSparseIntArray;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
@@ -145,16 +141,17 @@ public class NotificationsController extends BaseController {
         }
         audioManager = (AudioManager) ApplicationLoader.applicationContext.getSystemService(Context.AUDIO_SERVICE);
     }
-    
-    private static volatile NotificationsController[] Instance = new NotificationsController[UserConfig.MAX_ACCOUNT_COUNT];
+
+    private static SparseArray<NotificationsController> Instance = new SparseArray<>();
+    private static final Object lockObject = new Object();
 
     public static NotificationsController getInstance(int num) {
-        NotificationsController localInstance = Instance[num];
+        NotificationsController localInstance = Instance.get(num);
         if (localInstance == null) {
-            synchronized (NotificationsController.class) {
-                localInstance = Instance[num];
+            synchronized (lockObject) {
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new NotificationsController(num);
+                    Instance.put(num, localInstance = new NotificationsController(num));
                 }
             }
         }
@@ -231,7 +228,7 @@ public class NotificationsController extends BaseController {
                 preferences = ApplicationLoader.applicationContext.getSharedPreferences("Notifications", Activity.MODE_PRIVATE);
             }
             OTHER_NOTIFICATIONS_CHANNEL = "Other" + Utilities.random.nextLong();
-            preferences.edit().putString("OtherKey", OTHER_NOTIFICATIONS_CHANNEL).commit();
+            preferences.edit().putString("OtherKey", OTHER_NOTIFICATIONS_CHANNEL).apply();
         }
         if (notificationChannel == null) {
             notificationChannel = new NotificationChannel(OTHER_NOTIFICATIONS_CHANNEL, "Internal notifications", NotificationManager.IMPORTANCE_DEFAULT);
@@ -268,7 +265,7 @@ public class NotificationsController extends BaseController {
             }
             NotificationsController.getInstance(currentAccount).removeNotificationsForDialog(did);
             MessagesStorage.getInstance(currentAccount).setDialogFlags(did, flags);
-            editor.commit();
+            editor.apply();
             TLRPC.Dialog dialog = MessagesController.getInstance(currentAccount).dialogs_dict.get(did);
             if (dialog != null) {
                 dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
@@ -310,7 +307,7 @@ public class NotificationsController extends BaseController {
             SharedPreferences preferences = getAccountInstance().getNotificationsSettings();
             SharedPreferences.Editor editor = preferences.edit();
             editor.clear();
-            editor.commit();
+            editor.apply();
 
             if (Build.VERSION.SDK_INT >= 26) {
                 try {
@@ -1258,7 +1255,7 @@ public class NotificationsController extends BaseController {
 
     private int getTotalAllUnreadCount() {
         int count = 0;
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+        for (int a : SharedConfig.activeAccounts) {
             if (UserConfig.getInstance(a).isClientActivated()) {
                 NotificationsController controller = getInstance(a);
                 if (controller.showBadgeNumber) {
@@ -2770,7 +2767,7 @@ public class NotificationsController extends BaseController {
                     }
                 }
             }
-            editor.commit();
+            editor.apply();
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -2848,7 +2845,7 @@ public class NotificationsController extends BaseController {
                 overwriteKey = "overwrite_private";
             }
             editor.remove(overwriteKey);
-            editor.commit();
+            editor.apply();
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -2883,7 +2880,7 @@ public class NotificationsController extends BaseController {
                         editor.remove(key);
                     }
                 }
-                editor.commit();
+                editor.apply();
             } catch (Exception e) {
                 FileLog.e(e);
             }
@@ -3011,12 +3008,12 @@ public class NotificationsController extends BaseController {
                     }
                 }
                 if (editor != null) {
-                    editor.commit();
+                    editor.apply();
                 }
             } catch (Exception e) {
                 FileLog.e(e);
             }
-            preferences.edit().putBoolean("groupsCreated4", true).commit();
+            preferences.edit().putBoolean("groupsCreated4", true).apply();
             groupsCreated = true;
         }
         if (!channelGroupsCreated) {
@@ -3192,7 +3189,7 @@ public class NotificationsController extends BaseController {
                                     priority = 0;
                                 }
                                 if (isDefault) {
-                                    editor.putInt(getGlobalNotificationsKey(type), 0).commit();
+                                    editor.putInt(getGlobalNotificationsKey(type), 0).apply();
                                     if (type == TYPE_CHANNEL) {
                                         editor.putInt("priority_channel", priority);
                                     } else if (type == TYPE_GROUP) {
@@ -3250,7 +3247,7 @@ public class NotificationsController extends BaseController {
                             edited = true;
                         }
                         if (editor != null) {
-                            editor.commit();
+                            editor.apply();
                         }
                     }
                 }
@@ -3261,7 +3258,7 @@ public class NotificationsController extends BaseController {
         }
 
         if (edited && newSettingsHash != null) {
-            preferences.edit().putString(key, channelId).putString(key + "_s", newSettingsHash).commit();
+            preferences.edit().putString(key, channelId).putString(key + "_s", newSettingsHash).apply();
             if (BuildVars.LOGS_ENABLED) {
                 FileLog.d("change edited channel " + channelId);
             }
@@ -3326,7 +3323,7 @@ public class NotificationsController extends BaseController {
             }
             lastNotificationChannelCreateTime = SystemClock.elapsedRealtime();
             systemNotificationManager.createNotificationChannel(notificationChannel);
-            preferences.edit().putString(key, channelId).putString(key + "_s", newSettingsHash).commit();
+            preferences.edit().putString(key, channelId).putString(key + "_s", newSettingsHash).apply();
         }
         return channelId;
     }
@@ -3721,7 +3718,7 @@ public class NotificationsController extends BaseController {
                     mBuilder.setLargeIcon(img.getBitmap());
                 } else {
                     try {
-                        File file = FileLoader.getPathToAttach(photoPath, true);
+                        File file = getFileLoader().getPathToAttach(photoPath, true);
                         if (file.exists()) {
                             float scaleFactor = 160.0f / AndroidUtilities.dp(50);
                             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -3903,7 +3900,7 @@ public class NotificationsController extends BaseController {
                 editor.putString("sound_path_" + dialogId, newSound);
                 deleteNotificationChannelInternal(dialogId, -1);
             }
-            editor.commit();
+            editor.apply();
             sound = Settings.System.DEFAULT_RINGTONE_URI;
             notificationBuilder.setChannelId(validateChannelId(dialogId, chatName, vibrationPattern, ledColor, sound, importance, isDefault, isInApp, isSilent, chatType));
             notificationManager.notify(notificationId, notificationBuilder.build());
@@ -4106,7 +4103,7 @@ public class NotificationsController extends BaseController {
             }
 
             if (photoPath != null) {
-                avatalFile = FileLoader.getPathToAttach(photoPath, true);
+                avatalFile = getFileLoader().getPathToAttach(photoPath, true);
                 if (Build.VERSION.SDK_INT < 28) {
                     BitmapDrawable img = ImageLoader.getInstance().getImageFromMemory(photoPath, null, "50_50");
                     if (img != null) {
@@ -4178,7 +4175,7 @@ public class NotificationsController extends BaseController {
                 try {
                     if (sender != null && sender.photo != null && sender.photo.photo_small != null && sender.photo.photo_small.volume_id != 0 && sender.photo.photo_small.local_id != 0) {
                         Person.Builder personBuilder = new Person.Builder().setName(LocaleController.getString("FromYou", R.string.FromYou));
-                        File avatar = FileLoader.getPathToAttach(sender.photo.photo_small, true);
+                        File avatar = getFileLoader().getPathToAttach(sender.photo.photo_small, true);
                         loadRoundAvatar(avatar, personBuilder);
                         selfPerson = personBuilder.build();
                         personCache.put(selfUserId, selfPerson);
@@ -4278,7 +4275,7 @@ public class NotificationsController extends BaseController {
                                 }
                             }
                             if (sender != null && sender.photo != null && sender.photo.photo_small != null && sender.photo.photo_small.volume_id != 0 && sender.photo.photo_small.local_id != 0) {
-                                avatar = FileLoader.getPathToAttach(sender.photo.photo_small, true);
+                                avatar = getFileLoader().getPathToAttach(sender.photo.photo_small, true);
                             }
                         }
                         loadRoundAvatar(avatar, personBuilder);
@@ -4291,7 +4288,7 @@ public class NotificationsController extends BaseController {
                     boolean setPhoto = false;
                     if (preview[0] && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && !((ActivityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACTIVITY_SERVICE)).isLowRamDevice()) {
                         if (!waitingForPasscode && !messageObject.isSecretMedia() && (messageObject.type == 1 || messageObject.isSticker())) {
-                            File attach = FileLoader.getPathToMessage(messageObject.messageOwner);
+                            File attach = getFileLoader().getPathToMessage(messageObject.messageOwner);
                             NotificationCompat.MessagingStyle.Message msg = new NotificationCompat.MessagingStyle.Message(message, ((long) messageObject.messageOwner.date) * 1000L, person);
                             String mimeType = messageObject.isSticker() ? "image/webp" : "image/jpeg";
                             Uri uri;
@@ -4334,7 +4331,7 @@ public class NotificationsController extends BaseController {
                     if (preview[0] && !waitingForPasscode && messageObject.isVoice()) {
                         List<NotificationCompat.MessagingStyle.Message> messages = messagingStyle.getMessages();
                         if (!messages.isEmpty()) {
-                            File f = FileLoader.getPathToMessage(messageObject.messageOwner);
+                            File f = getFileLoader().getPathToMessage(messageObject.messageOwner);
                             Uri uri;
                             if (Build.VERSION.SDK_INT >= 24) {
                                 try {
@@ -4386,7 +4383,7 @@ public class NotificationsController extends BaseController {
             msgHeardIntent.putExtra("max_id", maxId);
             msgHeardIntent.putExtra("currentAccount", currentAccount);
             PendingIntent readPendingIntent = PendingIntent.getBroadcast(ApplicationLoader.applicationContext, internalId, msgHeardIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(R.drawable.menu_read, LocaleController.getString("MarkAsRead", R.string.MarkAsRead), readPendingIntent)
+            NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(R.drawable.msg_markread, LocaleController.getString("MarkAsRead", R.string.MarkAsRead), readPendingIntent)
                     .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
                     .setShowsUserInterface(false)
                     .build();
@@ -4621,7 +4618,7 @@ public class NotificationsController extends BaseController {
         if (dialog != null) {
             dialog.notify_settings = new TLRPC.TL_peerNotifySettings();
         }
-        editor.commit();
+        editor.apply();
         getNotificationsController().updateServerNotificationsSettings(did, true);
     }
 
@@ -4667,7 +4664,7 @@ public class NotificationsController extends BaseController {
                 dialog.notify_settings.mute_until = untilTime;
             }
         }
-        editor.commit();
+        editor.apply();
         updateServerNotificationsSettings(dialog_id);
     }
 
@@ -4822,7 +4819,7 @@ public class NotificationsController extends BaseController {
     }
 
     public void setGlobalNotificationsEnabled(int type, int time) {
-        getAccountInstance().getNotificationsSettings().edit().putInt(getGlobalNotificationsKey(type), time).commit();
+        getAccountInstance().getNotificationsSettings().edit().putInt(getGlobalNotificationsKey(type), time).apply();
         updateServerNotificationsSettings(type);
         getMessagesStorage().updateMutedDialogsFiltersCounters();
         deleteNotificationChannelGlobal(type);

@@ -14,8 +14,6 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.Components.EditTextBoldCursor;
 
@@ -131,6 +129,10 @@ public class EditTextOutline extends EditTextBoldCursor {
         if (mFrameColor != 0) {
             paint.setColor(mFrameColor);
             Layout sl = getLayout();
+            if (sl == null) {
+                super.onDraw(canvas);
+                return;
+            }
             if (lines == null || lines.length != sl.getLineCount()) {
                 lines = new float[sl.getLineCount()];
             }

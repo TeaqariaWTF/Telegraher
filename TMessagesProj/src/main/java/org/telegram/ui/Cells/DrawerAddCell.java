@@ -11,15 +11,12 @@ package org.telegram.ui.Cells;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -36,18 +33,13 @@ public class DrawerAddCell extends FrameLayout {
         textView = new TextView(context);
         textView.setTextColor(Theme.getColor(Theme.key_chats_menuItemText));
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         textView.setLines(1);
         textView.setMaxLines(1);
         textView.setSingleLine(true);
         textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-        textView.setCompoundDrawablePadding(AndroidUtilities.dp(34));
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 23, 0, 16, 0));
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.textView != null) this.textView.setTypeface(font);
+        textView.setCompoundDrawablePadding(AndroidUtilities.dp(29));
+        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 19, 0, 16, 0));
     }
 
     @Override
@@ -60,7 +52,7 @@ public class DrawerAddCell extends FrameLayout {
         super.onAttachedToWindow();
         textView.setTextColor(Theme.getColor(Theme.key_chats_menuItemText));
         textView.setText(LocaleController.getString("AddAccount", R.string.AddAccount));
-        Drawable drawable = getResources().getDrawable(R.drawable.account_add);
+        Drawable drawable = getResources().getDrawable(R.drawable.msg_add);
         if (drawable != null) {
             drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_menuItemIcon), PorterDuff.Mode.MULTIPLY));
         }

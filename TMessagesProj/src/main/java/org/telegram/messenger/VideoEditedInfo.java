@@ -54,6 +54,7 @@ public class VideoEditedInfo {
     public boolean canceled;
     public boolean videoConvertFirstWrite;
     public boolean needUpdateProgress = false;
+    public boolean shouldLimitFps = true;
 
     public static class MediaEntity {
         public byte type;
@@ -254,7 +255,6 @@ public class VideoEditedInfo {
             return false;
         }
         try {
-            if (UserConfig.TDBG) System.out.printf("HEY VideoEditedInfo parseString `%s`%n", string);
             String[] args = string.split("_");
             if (args.length >= 11) {
                 startTime = Long.parseLong(args[1]);
@@ -267,7 +267,6 @@ public class VideoEditedInfo {
                 resultHeight = Integer.parseInt(args[8]);
                 originalDuration = Long.parseLong(args[9]);
                 framerate = Integer.parseInt(args[10]);
-                if (UserConfig.TDBG) System.out.printf("HEY VideoEditedInfo parseString framerate `%d`%n", framerate);
                 muted = bitrate == -1;
                 int start;
                 if (args[11].startsWith("-")) {

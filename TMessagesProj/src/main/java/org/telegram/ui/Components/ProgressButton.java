@@ -8,8 +8,6 @@ import android.os.Build;
 import android.util.TypedValue;
 import android.widget.Button;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 
@@ -27,7 +25,7 @@ public class ProgressButton extends Button {
         super(context);
         setAllCaps(false);
         setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             setOutlineProvider(null);
         }
@@ -80,7 +78,11 @@ public class ProgressButton extends Button {
     }
 
     public void setBackgroundRoundRect(int backgroundColor, int pressedBackgroundColor) {
-        setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), backgroundColor, pressedBackgroundColor));
+        setBackgroundRoundRect(backgroundColor, pressedBackgroundColor, 4);
+    }
+
+    public void setBackgroundRoundRect(int backgroundColor, int pressedBackgroundColor, float radius) {
+        setBackground(Theme.AdaptiveRipple.filledRect(backgroundColor, radius));
     }
 
     public void setProgressColor(int progressColor) {

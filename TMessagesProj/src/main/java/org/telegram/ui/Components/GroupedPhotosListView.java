@@ -11,8 +11,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Scroller;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.ImageLocation;
@@ -745,6 +743,7 @@ public class GroupedPhotosListView extends View implements GestureDetector.OnGes
                 }
             }
             receiver.setAlpha(drawAlpha);
+            receiver.setRoundRadius(AndroidUtilities.dp(2));
             receiver.draw(canvas);
         }
 

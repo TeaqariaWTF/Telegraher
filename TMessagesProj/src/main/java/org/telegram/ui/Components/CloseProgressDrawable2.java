@@ -19,8 +19,6 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 public class CloseProgressDrawable2 extends Drawable {

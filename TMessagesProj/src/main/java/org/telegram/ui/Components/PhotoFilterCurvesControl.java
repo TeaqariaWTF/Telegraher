@@ -17,8 +17,6 @@ import android.text.TextPaint;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 import java.util.Locale;

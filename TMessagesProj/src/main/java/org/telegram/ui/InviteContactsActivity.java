@@ -39,8 +39,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.FileLog;
@@ -572,7 +570,7 @@ public class InviteContactsActivity extends BaseFragment implements Notification
         infoTextView.setGravity(Gravity.CENTER);
         infoTextView.setText(LocaleController.getString("InviteFriendsHelp", R.string.InviteFriendsHelp));
         infoTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
-        infoTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        infoTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         infoTextView.setPadding(AndroidUtilities.dp(17), AndroidUtilities.dp(9), AndroidUtilities.dp(17), AndroidUtilities.dp(9));
         frameLayout.addView(infoTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.BOTTOM));
 
@@ -608,7 +606,7 @@ public class InviteContactsActivity extends BaseFragment implements Notification
         counterView.addView(linearLayout, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER));
 
         counterTextView = new TextView(context);
-        counterTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        counterTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         counterTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         counterTextView.setTextColor(Theme.getColor(Theme.key_contacts_inviteBackground));
         counterTextView.setGravity(Gravity.CENTER);
@@ -623,7 +621,7 @@ public class InviteContactsActivity extends BaseFragment implements Notification
         textView.setGravity(Gravity.CENTER);
         textView.setCompoundDrawablePadding(AndroidUtilities.dp(8));
         textView.setText(LocaleController.getString("InviteToTelegram", R.string.InviteToTelegram).toUpperCase());
-        textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         linearLayout.addView(textView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
 
         updateHint();

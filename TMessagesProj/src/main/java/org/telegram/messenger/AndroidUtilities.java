@@ -49,6 +49,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.Vibrator;
 import android.provider.CallLog;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
@@ -77,6 +78,7 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
@@ -91,12 +93,14 @@ import android.view.inputmethod.InputMethodSubtype;
 import android.webkit.MimeTypeMap;
 import android.widget.EdgeEffect;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.dynamicanimation.animation.DynamicAnimation;
 import androidx.dynamicanimation.animation.SpringAnimation;
@@ -106,9 +110,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.android.internal.telephony.ITelephony;
-//import com.google.android.gms.auth.api.phone.SmsRetriever;
-//import com.google.android.gms.auth.api.phone.SmsRetrieverClient;
-import com.google.android.gms.tasks.Task;
 
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.browser.Browser;
@@ -166,13 +167,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AndroidUtilities {
     public final static int LIGHT_STATUS_BAR_OVERLAY = 0x0f000000, DARK_STATUS_BAR_OVERLAY = 0x33000000;
 
+    public final static String TYPEFACE_ROBOTO_MEDIUM = "fonts/rmedium.ttf";
+
     private static final Hashtable<String, Typeface> typefaceCache = new Hashtable<>();
+    public static float touchSlop;
     private static int prevOrientation = -10;
     private static boolean waitingForSms = false;
     private static boolean waitingForCall = false;
@@ -200,6 +205,7 @@ public class AndroidUtilities {
     public static OvershootInterpolator overshootInterpolator = new OvershootInterpolator();
 
     private static AccessibilityManager accessibilityManager;
+    private static Vibrator vibrator;
 
     private static Boolean isTablet = null, isSmallScreen = null;
     private static int adjustOwnerClassGuid = 0;
@@ -438,6 +444,23 @@ public class AndroidUtilities {
         return spannableStringBuilder;
     }
 
+    public static void recycleBitmaps(ArrayList<Bitmap> bitmapToRecycle) {
+        if (bitmapToRecycle != null && !bitmapToRecycle.isEmpty()) {
+            AndroidUtilities.runOnUIThread(() -> NotificationCenter.getInstance(UserConfig.selectedAccount).doOnIdle(() -> {
+                for (int i = 0; i < bitmapToRecycle.size(); i++) {
+                    Bitmap bitmap = bitmapToRecycle.get(i);
+                    if (bitmap != null && !bitmap.isRecycled()) {
+                        try {
+                            bitmap.recycle();
+                        } catch (Exception e) {
+                            FileLog.e(e);
+                        }
+                    }
+                }
+            }), 36);
+        }
+    }
+
     private static class LinkSpec {
         String url;
         int start;
@@ -513,7 +536,7 @@ public class AndroidUtilities {
             Linkify.addLinks(text, Linkify.PHONE_NUMBERS);
         }
         if ((mask & Linkify.WEB_URLS) != 0) {
-            gatherLinks(links, text, LinkifyPort.WEB_URL, new String[]{"http://", "https://", "ton://", "tg://"}, sUrlMatchFilter, internalOnly);
+            gatherLinks(links, text, LinkifyPort.WEB_URL, new String[]{"http://", "https://", "tg://"}, sUrlMatchFilter, internalOnly);
         }
         pruneOverlaps(links);
         if (links.size() == 0) {
@@ -845,10 +868,17 @@ public class AndroidUtilities {
     }
 
     public static void requestAdjustResize(Activity activity, int classGuid) {
-        if (activity == null || isTablet()) {
+        if (activity == null) {
             return;
         }
-        activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        requestAdjustResize(activity.getWindow(), classGuid);
+    }
+
+    public static void requestAdjustResize(Window window, int classGuid) {
+        if (window == null || isTablet()) {
+            return;
+        }
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         adjustOwnerClassGuid = classGuid;
     }
 
@@ -893,27 +923,6 @@ public class AndroidUtilities {
 
     public static boolean isGoogleMapsInstalled(final BaseFragment fragment) {
         return true;
-//        try {
-//            ApplicationLoader.applicationContext.getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0);
-//            return true;
-//        } catch (PackageManager.NameNotFoundException e) {
-//            if (fragment.getParentActivity() == null) {
-//                return false;
-//            }
-//            AlertDialog.Builder builder = new AlertDialog.Builder(fragment.getParentActivity());
-//            builder.setMessage(LocaleController.getString("InstallGoogleMaps", R.string.InstallGoogleMaps));
-//            builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), (dialogInterface, i) -> {
-//                try {
-//                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.maps"));
-//                    fragment.getParentActivity().startActivityForResult(intent, 500);
-//                } catch (Exception e1) {
-//                    FileLog.e(e1);
-//                }
-//            });
-//            builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
-//            fragment.showDialog(builder.create());
-//            return false;
-//        }
     }
 
     public static int[] toIntArray(List<Integer> integers) {
@@ -1821,6 +1830,8 @@ public class AndroidUtilities {
                 }
                 FileLog.e("density = " + density + " display size = " + displaySize.x + " " + displaySize.y + " " + displayMetrics.xdpi + "x" + displayMetrics.ydpi + ", screen layout: " + configuration.screenLayout + ", statusbar height: " + statusBarHeight + ", navbar height: " + navigationBarHeight);
             }
+            ViewConfiguration vc = ViewConfiguration.get(context);
+            touchSlop = vc.getScaledTouchSlop();
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -2597,8 +2608,13 @@ public class AndroidUtilities {
 
     public static File generatePicturePath(boolean secretChat, String ext) {
         try {
-            File storageDir = ApplicationLoader.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-            return new File(storageDir, generateFileName(0, ext));
+            File publicDir = FileLoader.getDirectory(FileLoader.MEDIA_DIR_IMAGE_PUBLIC);
+            if (secretChat || publicDir == null) {
+                File storageDir = ApplicationLoader.applicationContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                return new File(storageDir, generateFileName(0, ext));
+            } else {
+                return new File(publicDir, generateFileName(0, ext));
+            }
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -2668,6 +2684,7 @@ public class AndroidUtilities {
     }
 
     public static boolean isSimAvailable() {
+        if (true) return true;
         TelephonyManager tm = (TelephonyManager) ApplicationLoader.applicationContext.getSystemService(Context.TELEPHONY_SERVICE);
         int state = tm.getSimState();
         return state != TelephonyManager.SIM_STATE_ABSENT && state != TelephonyManager.SIM_STATE_UNKNOWN && tm.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE && !isAirplaneModeOn();
@@ -2728,7 +2745,7 @@ public class AndroidUtilities {
             if (removeZero && (value - (int) value) * 10 == 0) {
                 return String.format("%d GB", (int) value);
             } else {
-                return String.format("%.1f GB", value);
+                return String.format("%.2f GB", value);
             }
         }
     }
@@ -2973,7 +2990,7 @@ public class AndroidUtilities {
             f = new File(message.messageOwner.attachPath);
         }
         if (f == null || f != null && !f.exists()) {
-            f = FileLoader.getPathToMessage(message.messageOwner);
+            f = FileLoader.getInstance(UserConfig.selectedAccount).getPathToMessage(message.messageOwner);
         }
         if (f != null && f.exists()) {
             if (parentFragment != null && f.getName().toLowerCase().endsWith("attheme")) {
@@ -3092,7 +3109,7 @@ public class AndroidUtilities {
             f = new File(message.messageOwner.attachPath);
         }
         if (f == null || !f.exists()) {
-            f = FileLoader.getPathToMessage(message.messageOwner);
+            f = FileLoader.getInstance(message.currentAccount).getPathToMessage(message.messageOwner);
         }
         String mimeType = message.type == 9 || message.type == 0 ? message.getMimeType() : null;
         return openForView(f, message.getFileName(), mimeType, activity, resourcesProvider);
@@ -3100,7 +3117,7 @@ public class AndroidUtilities {
 
     public static boolean openForView(TLRPC.Document document, boolean forceCache, Activity activity) {
         String fileName = FileLoader.getAttachFileName(document);
-        File f = FileLoader.getPathToAttach(document, true);
+        File f = FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(document, true);
         return openForView(f, fileName, document.mime_type, activity, null);
     }
 
@@ -3181,7 +3198,7 @@ public class AndroidUtilities {
             return false;
         }
         String fileName = FileLoader.getAttachFileName(media);
-        File f = FileLoader.getPathToAttach(media, true);
+        File f = FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(media, true);
         if (f != null && f.exists()) {
             String realMimeType = null;
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -3285,6 +3302,13 @@ public class AndroidUtilities {
         if (translate) {
             matrix.preTranslate(tx, ty);
         }
+    }
+
+    public static Vibrator getVibrator() {
+        if (vibrator == null) {
+            vibrator = (Vibrator) ApplicationLoader.applicationContext.getSystemService(Context.VIBRATOR_SERVICE);
+        }
+        return vibrator;
     }
 
     public static boolean isAccessibilityTouchExplorationEnabled() {
@@ -3470,7 +3494,7 @@ public class AndroidUtilities {
                 editor.putString("proxy_secret", secret);
                 info = new SharedConfig.ProxyInfo(address, p, "", "", secret);
             }
-            editor.commit();
+            editor.apply();
 
             SharedConfig.currentProxy = SharedConfig.addProxy(info);
 
@@ -3798,6 +3822,10 @@ public class AndroidUtilities {
         }
     }
 
+    public static float computeDampingRatio(float tension /* stiffness */, float friction /* damping */, float mass) {
+        return friction / (2f * (float) Math.sqrt(mass * tension));
+    }
+
     private static WeakReference<BaseFragment> flagSecureFragment;
 
     public static boolean hasFlagSecureFragment() {
@@ -3892,10 +3920,11 @@ public class AndroidUtilities {
 //        mapRSA.put("web850", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGA1vtGy8nGROK52fr8SvDtleF8Pu8rVhmHwfnOvHoj9rK1Rd6CAajaP+YTjFV8cc5/qrFBvzuQCDJiIoJxwXdeTzcohwyIY5YjXidSyyWBuwl52BzvukMLPIa9splohThvhiUWZNe2sjzREZrhriou35uJ+p4hW1P7jEKE/slUZv8=");
 //        mapRSA.put("store851", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAs3WsjWS8vyHsRNV2gRgYXGzO/wYWEiKeAwZsOHEtztDxLy75t9Mw3DEba6tKbfVKB6T3TH3REaj9go3zXUnYidYXL0wd61WfzbbQHAJOO0v0v54PwFnw0aXGbjB7UomvgH7Ngy7Lr+++oDusQ06/uSmD2fbiDzr6KhvWJna7F7c=");
 //        mapRSA.put("web852", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGARP+eoWqKYpgP9Ubuv2m0ex7EkAIgOJbfMf3Tb5NKC4FmJf08hGcN3CZ22u05GlprFo4XXHBhCL8uMbycpsMkBvsignn+tXZUdD2dpzgAcTzSWHrgN74gtpdvrMAhJ9Kj6w0Sq2ZldQi5S4hmPSn5PhVViSfJbjvJ5FvokWaSBPQ=");
-//        mapRSA.put("store854", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAJFCw+xW+NV1mqV+4j5RoPULljr/0iRAXqyhTBXMDO4T61WnhNQ9NqjTewEQRsOjZXw0bVVJlv0abUmXVA2OUBhbMGUxaQRUIoNO/ijjmGb2v6Jsemg8ONJC+bwwjODJM7+Fi6YAXe91zjy0ac2qtoGsW4ItADqrXWiRQKapskRs=");
-//        mapRSA.put("store861", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAn3HjuiINOgQ7T2p8KRmxVRRpKmKzvWz04fDEGGAifPrWNT7Xi/tHYnzfxEDkEo+eW54Y19OXw9ZE0SgtsgIrnbfYqdG8DT0uwnQy6hvsinS4+LDEwI2i5p2x/Gjx50TMZJACrnTmqeAl8SpmRreymrsR++S/F+qz2H4g9J7jv+Y=");
 //        mapRSA.put("store862", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGArhw54aK6JilvbEIMfz+s6kZEMSEtMa4ue68qVVVEriYiB0wodJHjJoqqt39ZZV67cOWjTph7n2D5Z2TPtiFNLzmTnWBBseIufuqMe4yBwWN4+SAAXWYM6peREYrDi2zw4YKxHnxNjNc9DEYh7ZxSEC1khrraKZaElfYlHnpZN8E=");
-        mapRSA.put("store874", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAOAAceH6Sobr64Kcd1yKZNPMpOhvuoR7rvw5J2QBlXhv8/yZdbpmyauRJf7EoraAGLSY3CqrgZezQzuwMbND601l8HPzPenXVdmoREkBBM/5XtQw+d1+VJuIR08p+aaYQFQ4prsnvU2doSGNfz7zJODdCtMMJyu1XE2CnKJXGgpU=");
+//        mapRSA.put("store874", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAOAAceH6Sobr64Kcd1yKZNPMpOhvuoR7rvw5J2QBlXhv8/yZdbpmyauRJf7EoraAGLSY3CqrgZezQzuwMbND601l8HPzPenXVdmoREkBBM/5XtQw+d1+VJuIR08p+aaYQFQ4prsnvU2doSGNfz7zJODdCtMMJyu1XE2CnKJXGgpU=");
+//        mapRSA.put("store886", "MIIDWAYJKoZIhvcNAQcCoIIDSTCCA0UCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggIbMIICFzCCAYCgAwIBAgIEUh+dSTANBgkqhkiG9w0BAQUFADBQMRkwFwYDVQQHExBTYWludC1QZXRlcnNidXJnMQswCQYDVQQKEwJWSzELMAkGA1UECxMCVksxGTAXBgNVBAMTEE5pa29sYXkgS3VkYXNob3YwHhcNMTMwODI5MTkxMzEzWhcNMzgwODIzMTkxMzEzWjBQMRkwFwYDVQQHExBTYWludC1QZXRlcnNidXJnMQswCQYDVQQKEwJWSzELMAkGA1UECxMCVksxGTAXBgNVBAMTEE5pa29sYXkgS3VkYXNob3YwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAN9emToN7Aq1tVff/3fgsiJxhsvxPR/R7Y6d61ZQxf1EZ7tRv6WFIo0IS9JwRfdBW3xOOPCL42Jjmi7rmwx0naRg8nBfan4UrKdqvjNgrwC3GcxfP/TU2gWVgyfpSLNnnmQXrXuqh3m51ol5m6NFg5oEn9RDYkmQVKCAOgF4x3N5AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEA3aWM3ZAVnEMezEoVkC6vsHpQ4Bup1PjmVewUsGvY6HcSOXEKKJkQOeAuNSdi61JK8HYCu9+0edNxhlilNNQR36swEiyNCl79FlpiBmnYCiIaBKx9aLOBEVDHac+X0ydL6bnyfExYd+q7z4mQQJ5ZQ9+N61CfqD1o6rx098WXZ0MxggEBMIH+AgEBMFgwUDEZMBcGA1UEBxMQU2FpbnQtUGV0ZXJzYnVyZzELMAkGA1UEChMCVksxCzAJBgNVBAsTAlZLMRkwFwYDVQQDExBOaWtvbGF5IEt1ZGFzaG92AgRSH51JMA0GCWCGSAFlAwQCAQUAMA0GCSqGSIb3DQEBAQUABIGAXdr/TsTVMEbDcOlwUfblRi/LpmsaN219vH+s4csR6oVkFCe3h8Ozahm16z0DRBk6KXfPvElv00oZ/X4LJhMMq2/cepgWLQlonkjIvBO+HvPdM5RXJ+hSaUAlFKo97vdfYmODB1cgwi2rIvVpFE+b32cl+F3W4FzI0gPVLFxOtus=");
+        mapRSA.put("store893", "MIIDTwYJKoZIhvcNAQcCoIIDQDCCAzwCAQExCzAJBgUrDgMCGgUAMAsGCSqGSIb3DQEHAaCCAhswggIXMIIBgKADAgECAgRSH51JMA0GCSqGSIb3DQEBBQUAMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjAeFw0xMzA4MjkxOTEzMTNaFw0zODA4MjMxOTEzMTNaMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA316ZOg3sCrW1V9//d+CyInGGy/E9H9Htjp3rVlDF/URnu1G/pYUijQhL0nBF90FbfE448IvjYmOaLuubDHSdpGDycF9qfhSsp2q+M2CvALcZzF8/9NTaBZWDJ+lIs2eeZBete6qHebnWiXmbo0WDmgSf1ENiSZBUoIA6AXjHc3kCAwEAATANBgkqhkiG9w0BAQUFAAOBgQDdpYzdkBWcQx7MShWQLq+welDgG6nU+OZV7BSwa9jodxI5cQoomRA54C41J2LrUkrwdgK737R503GGWKU01BHfqzASLI0KXv0WWmIGadgKIhoErH1os4ERUMdpz5fTJ0vpufJ8TFh36rvPiZBAnllD343rUJ+oPWjqvHT3xZdnQzGB/TCB+gIBATBYMFAxGTAXBgNVBAcTEFNhaW50LVBldGVyc2J1cmcxCzAJBgNVBAoTAlZLMQswCQYDVQQLEwJWSzEZMBcGA1UEAxMQTmlrb2xheSBLdWRhc2hvdgIEUh+dSTAJBgUrDgMCGgUAMA0GCSqGSIb3DQEBAQUABIGAHC5nwtBRgXIcwRYNp7diSdU+djNurNM8EPs/eyjFliiM40WkUxxpPsgho8XNruL2yCQSHvVelESUpfeEicFtoa6NHGJQPdchZRepJ/hjksTXkUl8UBZRwo1Kd1FZbg2K7iJuCYnmAB1NxthVzqKBkChOAyxuMQu04lFALC3BZu0=");
+
         try {
             for (Map.Entry<String, String> m : mapRSA.entrySet()) {
                 InputStream input = new ByteArrayInputStream(Base64.decode(m.getValue(), Base64.NO_WRAP));
@@ -4181,11 +4210,34 @@ public class AndroidUtilities {
         }
     }
 
+    public static void updateImageViewImageAnimated(ImageView imageView, int newIcon) {
+        updateImageViewImageAnimated(imageView, ContextCompat.getDrawable(imageView.getContext(), newIcon));
+    }
+
+    public static void updateImageViewImageAnimated(ImageView imageView, Drawable newIcon) {
+        ValueAnimator animator = ValueAnimator.ofFloat(0, 1).setDuration(150);
+        AtomicBoolean changed = new AtomicBoolean();
+        animator.addUpdateListener(animation -> {
+            float val = (float) animation.getAnimatedValue();
+            float scale = 0.5f + Math.abs(val - 0.5f);
+            imageView.setScaleX(scale);
+            imageView.setScaleY(scale);
+            if (val >= 0.5f && !changed.get()) {
+                changed.set(true);
+                imageView.setImageDrawable(newIcon);
+            }
+        });
+        animator.start();
+    }
+
     public static void updateViewVisibilityAnimated(View view, boolean show) {
         updateViewVisibilityAnimated(view, show, 1f, true);
     }
 
     public static void updateViewVisibilityAnimated(View view, boolean show, float scaleFactor, boolean animated) {
+        if (view == null) {
+            return;
+        }
         if (view.getParent() == null) {
             animated = false;
         }
@@ -4300,5 +4352,15 @@ public class AndroidUtilities {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    public static boolean isAccessibilityScreenReaderEnabled() {
+        return false;
+//        try {
+//            AccessibilityManager am = (AccessibilityManager) ApplicationLoader.applicationContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
+//            return (am != null && am.isEnabled() && !am.isTouchExplorationEnabled());
+//        } catch (Exception ignroe) {
+//            return false;
+//        }
     }
 }

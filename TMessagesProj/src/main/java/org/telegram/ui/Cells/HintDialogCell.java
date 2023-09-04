@@ -11,7 +11,6 @@ package org.telegram.ui.Cells;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -19,8 +18,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.MessagesController;
@@ -88,14 +85,9 @@ public class HintDialogCell extends FrameLayout {
                 invalidate();
             });
             addView(checkBox, LayoutHelper.createFrame(24, 24, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 19, 42, 0, 0));
-            checkBox.setChecked(true, false);
+            checkBox.setChecked(false, false);
             setWillNotDraw(false);
         }
-        setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-    }
-
-    public void setTypeface(Typeface font) {
-        if (this.nameTextView != null) this.nameTextView.setTypeface(font);
     }
 
     @Override
@@ -138,6 +130,12 @@ public class HintDialogCell extends FrameLayout {
         }
     }
 
+    public void setColors(String textColorKey, String backgroundColorKey) {
+        nameTextView.setTextColor(Theme.getColor(textColorKey));
+        this.backgroundColorKey = backgroundColorKey;
+        checkBox.setColor(Theme.key_dialogRoundCheckBox, backgroundColorKey, Theme.key_dialogRoundCheckBoxCheck);
+    }
+
     public void setDialog(long uid, boolean counter, CharSequence name) {
         if (dialogId != uid) {
             wasDraw = false;
@@ -173,6 +171,8 @@ public class HintDialogCell extends FrameLayout {
         }
     }
 
+    private String backgroundColorKey = Theme.key_windowBackgroundWhite;
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean result = super.drawChild(canvas, child, drawingTime);
@@ -199,7 +199,7 @@ public class HintDialogCell extends FrameLayout {
                 int left = AndroidUtilities.dp(59);
                 canvas.save();
                 canvas.scale(showOnlineProgress, showOnlineProgress, left, top);
-                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+                Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(backgroundColorKey));
                 canvas.drawCircle(left, top, AndroidUtilities.dp(7), Theme.dialogs_onlineCirclePaint);
                 Theme.dialogs_onlineCirclePaint.setColor(Theme.getColor(Theme.key_chats_onlineCircle));
                 canvas.drawCircle(left, top, AndroidUtilities.dp(5), Theme.dialogs_onlineCirclePaint);

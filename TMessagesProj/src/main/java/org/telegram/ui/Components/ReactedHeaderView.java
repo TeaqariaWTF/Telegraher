@@ -16,8 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.util.Consumer;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ImageLocation;
@@ -211,7 +209,7 @@ public class ReactedHeaderView extends FrameLayout {
                     if (message.messageOwner.reactions != null && message.messageOwner.reactions.results.size() == 1 && !list.reactions.isEmpty()) {
                         for (TLRPC.TL_availableReaction r : MediaDataController.getInstance(currentAccount).getReactionsList()) {
                             if (r.reaction.equals(list.reactions.get(0).reaction)) {
-                                reactView.setImage(ImageLocation.getForDocument(r.static_icon), "50_50", "webp", null, r);
+                                reactView.setImage(ImageLocation.getForDocument(r.center_icon), "40_40_lastframe", "webp", null, r);
                                 reactView.setVisibility(VISIBLE);
                                 reactView.setAlpha(0);
                                 reactView.animate().alpha(1f).start();

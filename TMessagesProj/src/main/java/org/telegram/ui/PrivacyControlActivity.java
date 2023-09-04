@@ -33,8 +33,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ContactsController;
@@ -61,6 +59,7 @@ import org.telegram.ui.Cells.ShadowSectionCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BackgroundGradientDrawable;
+import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.CombinedDrawable;
 import org.telegram.ui.Components.HintView;
@@ -339,7 +338,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
         });
 
         ActionBarMenu menu = actionBar.createMenu();
-        doneButton = menu.addItemWithWidth(done_button, R.drawable.ic_done, AndroidUtilities.dp(56), LocaleController.getString("Done", R.string.Done));
+        doneButton = menu.addItemWithWidth(done_button, R.drawable.ic_ab_done, AndroidUtilities.dp(56), LocaleController.getString("Done", R.string.Done));
         boolean hasChanges = hasChanges();
         doneButton.setAlpha(hasChanges ? 1.0f : 0.0f);
         doneButton.setScaleX(hasChanges ? 1.0f : 0.0f);
@@ -868,7 +867,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
                 builder.setTitle(LocaleController.getStringNew("AppName", R.string.AppName));
                 builder.setPositiveButton(LocaleController.getString("OK", R.string.OK), (dialogInterface, i) -> {
                     applyCurrentPrivacySettings();
-                    preferences.edit().putBoolean("privacyAlertShowed", true).commit();
+                    preferences.edit().putBoolean("privacyAlertShowed", true).apply();
                 });
                 builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
                 showDialog(builder.create());
@@ -1022,9 +1021,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
                                         android.content.ClipboardManager clipboard = (android.content.ClipboardManager) ApplicationLoader.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE);
                                         android.content.ClipData clip = android.content.ClipData.newPlainText("label", phoneLinkStr);
                                         clipboard.setPrimaryClip(clip);
-                                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                                            BulletinFactory.of(PrivacyControlActivity.this).createCopyBulletin(LocaleController.getString("PhoneCopied", R.string.PhoneCopied)).show();
-                                        }
+                                        BulletinFactory.of(PrivacyControlActivity.this).createCopyLinkBulletin(LocaleController.getString("LinkCopied", R.string.LinkCopied), getResourceProvider()).show();
                                     }
                                 }, 0, phoneLinkStr.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 

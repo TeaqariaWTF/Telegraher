@@ -20,8 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -43,7 +41,7 @@ public class ReportAlert extends BottomSheet {
             super(context);
 
             background = new View(context);
-            background.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(4), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+            background.setBackground(Theme.AdaptiveRipple.filledRect(Theme.key_featuredStickers_addButton, 4));
             addView(background, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 16, 16, 16, 16));
 
             textView = new TextView(context);
@@ -54,7 +52,7 @@ public class ReportAlert extends BottomSheet {
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            textView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             addView(textView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
         }
 
@@ -86,7 +84,7 @@ public class ReportAlert extends BottomSheet {
         frameLayout.addView(imageView, LayoutHelper.createFrame(160, 160, Gravity.CENTER_HORIZONTAL | Gravity.TOP, 17, 14, 17, 0));
 
         TextView percentTextView = new TextView(context);
-        percentTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        percentTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         percentTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         percentTextView.setTextColor(Theme.getColor(Theme.key_dialogTextBlack));
         if (type == AlertsCreator.REPORT_TYPE_SPAM) {

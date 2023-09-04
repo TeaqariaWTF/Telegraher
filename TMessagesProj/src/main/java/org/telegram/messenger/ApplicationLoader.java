@@ -30,20 +30,19 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.multidex.MultiDex;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-//import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.telegram.messenger.voip.VideoCapturerDevice;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.Components.ForegroundDetector;
+import org.telegram.ui.LauncherIconController;
 
 import java.io.File;
+import java.util.LinkedList;
 
 public class ApplicationLoader extends Application {
     private static PendingIntent pendingIntent;
@@ -69,7 +68,7 @@ public class ApplicationLoader extends Application {
     public static boolean canDrawOverlays;
     public static volatile long mainInterfacePausedStageQueueTime;
 
-    public static boolean hasPlayServices;
+    public static boolean hasPlayServices = true;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -92,7 +91,11 @@ public class ApplicationLoader extends Application {
         } catch (Exception e) {
             FileLog.e(e);
         }
-        return new File("/data/data/com.evildayz.code.telegraher/files");
+        return new File("/data/data/com.evildayz.code.telegraher2/files");
+    }
+
+    public static String getAccountPath(int accountId) {
+        return new File(getFilesDirFixed(), "account" + accountId).getPath();
     }
 
     public static void postInitApplication() {
@@ -101,11 +104,12 @@ public class ApplicationLoader extends Application {
         }
         applicationInited = true;
 
-        try {
-            LocaleController.getInstance(); //TODO improve
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SharedConfig.loadConfig();
+        SharedConfig.saveTHDeviceSpoofing();
+        SharedPrefsHelper.init(applicationContext);
+        UserConfig.getInstance(0).loadConfig();
+
+        LinkedList<Runnable> postRun = new LinkedList<>();
 
         try {
             connectivityManager = (ConnectivityManager) ApplicationLoader.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -119,11 +123,16 @@ public class ApplicationLoader extends Application {
                     }
 
                     boolean isSlow = isConnectionSlow();
-                    for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-                        if (!UserConfig.existsInHsAccs(a)) continue;
-                        if (UserConfig.TDBG) System.out.printf("HEY ApplicationLoader postInitApplication 1 [%d]%n", a);
+                    for (int a : SharedConfig.activeAccounts) {
                         ConnectionsManager.getInstance(a).checkConnection();
                         FileLoader.getInstance(a).onNetworkChanged(isSlow);
+                    }
+
+                    SharedConfig.saveTHAccounts();
+
+                    if (SharedConfig.loginingAccount != -1) {
+                        ConnectionsManager.getInstance(SharedConfig.loginingAccount).checkConnection();
+                        FileLoader.getInstance(SharedConfig.loginingAccount).onNetworkChanged(isSlow);
                     }
                 }
             };
@@ -154,7 +163,7 @@ public class ApplicationLoader extends Application {
 
         SharedConfig.loadConfig();
         SharedPrefsHelper.init(applicationContext);
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
+        for (int a : SharedConfig.activeAccounts) {
             UserConfig.getInstance(a).loadConfig();
             MessagesController.getInstance(a);
             if (a == 0) {
@@ -170,19 +179,17 @@ public class ApplicationLoader extends Application {
         }
 
         ApplicationLoader app = (ApplicationLoader) ApplicationLoader.applicationContext;
-        app.initPlayServices();
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("app initied");
         }
 
         MediaController.getInstance();
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY ApplicationLoader postInitApplication 2 [%d]%n", a);
+        for (int a : SharedConfig.activeAccounts) {
             ContactsController.getInstance(a).checkAppAccount();
             DownloadController.getInstance(a);
         }
         ChatThemeController.init();
+//        BillingController.getInstance().startConnection();
     }
 
     public ApplicationLoader() {
@@ -193,7 +200,6 @@ public class ApplicationLoader extends Application {
     public void onCreate() {
         try {
             applicationContext = getApplicationContext();
-            UserConfig.initHsAccs();
         } catch (Throwable ignore) {
 
         }
@@ -202,6 +208,7 @@ public class ApplicationLoader extends Application {
 
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("app start time = " + (startTime = SystemClock.elapsedRealtime()));
+            FileLog.d("buildVersion = " + BuildVars.BUILD_VERSION);
         }
         if (applicationContext == null) {
             applicationContext = getApplicationContext();
@@ -226,6 +233,9 @@ public class ApplicationLoader extends Application {
         applicationHandler = new Handler(applicationContext.getMainLooper());
 
         AndroidUtilities.runOnUIThread(ApplicationLoader::startPushService);
+
+        LauncherIconController.tryFixLauncherIconIfNeeded();
+
         org.osmdroid.config.Configuration.getInstance().setUserAgentValue("Telegraher "+BuildConfig.VERSION_NAME);
         org.osmdroid.config.Configuration.getInstance().setOsmdroidBasePath(new File(getCacheDir(),"osmdroid"));
     }
@@ -240,16 +250,16 @@ public class ApplicationLoader extends Application {
             SharedPreferences.Editor editor = preferences.edit();
             editor.putBoolean("pushService", enabled);
             editor.putBoolean("pushConnection", enabled);
-            editor.commit();
+            editor.apply();
             SharedPreferences preferencesCA = MessagesController.getNotificationsSettings(UserConfig.selectedAccount);
             SharedPreferences.Editor editorCA = preferencesCA.edit();
             editorCA.putBoolean("pushConnection", enabled);
             editorCA.putBoolean("pushService", enabled);
-            editorCA.commit();
+            editorCA.apply();
             ConnectionsManager.getInstance(UserConfig.selectedAccount).setPushConnectionEnabled(true);
         }
         if (enabled) {
-            FileLog.d("Trying to start push service every minute");
+            Log.d("Telegraher", "Trying to start push service every minute");
             // Telegram-FOSS: unconditionally enable push service
             AlarmManager am = (AlarmManager) applicationContext.getSystemService(Context.ALARM_SERVICE);
             Intent i = new Intent(applicationContext, NotificationsService.class);
@@ -258,14 +268,14 @@ public class ApplicationLoader extends Application {
             am.cancel(pendingIntent);
             am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000, pendingIntent);
             try {
-                FileLog.d("Starting push service...");
+                Log.d("Telegraher", "Starting push service...");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     applicationContext.startForegroundService(new Intent(applicationContext, NotificationsService.class));
                 } else {
                     applicationContext.startService(new Intent(applicationContext, NotificationsService.class));
                 }
             } catch (Throwable e) {
-                FileLog.d("Failed to start push service");
+                Log.d("Telegraher", "Failed to start push service");
             }
         } else {
             applicationContext.stopService(new Intent(applicationContext, NotificationsService.class));
@@ -273,9 +283,9 @@ public class ApplicationLoader extends Application {
             PendingIntent pintent = PendingIntent.getService(applicationContext, 0, new Intent(applicationContext, NotificationsService.class), 0);
             AlarmManager alarm = (AlarmManager)applicationContext.getSystemService(Context.ALARM_SERVICE);
             alarm.cancel(pintent);
-            if (pendingIntent != null) {
-                alarm.cancel(pendingIntent);
-            }
+	        if (pendingIntent != null) {
+	            alarm.cancel(pendingIntent);
+	        }
         }
     }
 
@@ -291,25 +301,6 @@ public class ApplicationLoader extends Application {
         }
     }
 
-    private void initPlayServices() {
-        AndroidUtilities.runOnUIThread(() -> {
-                if (BuildVars.LOGS_ENABLED) {
-                    FileLog.d("No valid Google Play Services APK found.");
-                }
-                SharedConfig.pushStringStatus = "__NO_GOOGLE_PLAY_SERVICES__";
-            ConnectionsManager.setRegId(null, SharedConfig.pushStringStatus);
-        }, 1000);
-    }
-
-    private boolean checkPlayServices() {
-//        try {
-//            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-//            return resultCode == ConnectionResult.SUCCESS;
-//        } catch (Exception e) {
-//            FileLog.e(e);
-//        }
-        return true;
-    }
 
     private static void ensureCurrentNetworkGet(boolean force) {
         if (force || currentNetworkInfo == null) {
@@ -365,21 +356,13 @@ public class ApplicationLoader extends Application {
         return false;
     }
 
-    public static boolean isConnectedToWiFi() {
-        try {
-            ensureCurrentNetworkGet(false);
-            if (currentNetworkInfo != null && (currentNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI || currentNetworkInfo.getType() == ConnectivityManager.TYPE_ETHERNET) && currentNetworkInfo.getState() == NetworkInfo.State.CONNECTED) {
-                return true;
-            }
-        } catch (Exception e) {
-            FileLog.e(e);
-        }
-        return false;
-    }
-
     public static boolean isConnectionSlow() {
         try {
             ensureCurrentNetworkGet(false);
+
+            if (MessagesController.getGlobalTelegraherSettings().getInt("GraheriumConnectionSpeed", 0) == 1) return true;
+            if (MessagesController.getGlobalTelegraherSettings().getInt("GraheriumConnectionSpeed", 0) == 2) return false;
+
             if (currentNetworkInfo != null && currentNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
                 switch (currentNetworkInfo.getSubtype()) {
                     case TelephonyManager.NETWORK_TYPE_1xRTT:

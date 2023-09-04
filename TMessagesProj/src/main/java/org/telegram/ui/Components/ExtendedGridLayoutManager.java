@@ -11,8 +11,6 @@ package org.telegram.ui.Components;
 import android.content.Context;
 import android.util.SparseIntArray;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -20,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class ExtendedGridLayoutManager extends GridLayoutManager {
 
+    private final boolean firstRowFullWidth;
     private final boolean lastRowFullWidth;
 
     private SparseIntArray itemSpans = new SparseIntArray();
@@ -33,8 +32,13 @@ public class ExtendedGridLayoutManager extends GridLayoutManager {
     }
 
     public ExtendedGridLayoutManager(Context context, int spanCount, boolean lastRowFullWidth) {
+        this(context, spanCount, lastRowFullWidth, false);
+    }
+
+    public ExtendedGridLayoutManager(Context context, int spanCount, boolean lastRowFullWidth, boolean firstRowFullWidth) {
         super(context, spanCount);
         this.lastRowFullWidth = lastRowFullWidth;
+        this.firstRowFullWidth = firstRowFullWidth;
     }
 
     @Override
@@ -63,6 +67,15 @@ public class ExtendedGridLayoutManager extends GridLayoutManager {
         int currentItemsInRow = 0;
         int currentItemsSpanAmount = 0;
         for (int a = 0, N = itemsCount + (lastRowFullWidth ? 1 : 0); a < N; a++) {
+            if (a == 0 && firstRowFullWidth) {
+                itemSpans.put(a, itemSpans.get(a) + spanCount);
+                itemsToRow.put(0, rowsCount);
+                rowsCount++;
+                currentItemsSpanAmount = 0;
+                currentItemsInRow = 0;
+                spanLeft = spanCount;
+                continue;
+            }
             Size size = a < itemsCount ? sizeForItem(a) : null;
             int requiredSpan;
             boolean moveToNewRow;
@@ -71,7 +84,7 @@ public class ExtendedGridLayoutManager extends GridLayoutManager {
                 requiredSpan = spanCount;
             } else {
                 requiredSpan = Math.min(spanCount, (int) Math.floor(spanCount * (size.width / size.height * preferredRowSize / viewPortAvailableSize)));
-                moveToNewRow = spanLeft<requiredSpan || requiredSpan > 33 && spanLeft < requiredSpan - 15;
+                moveToNewRow = spanLeft < requiredSpan || requiredSpan > 33 && spanLeft < requiredSpan - 15;
             }
             if (moveToNewRow) {
                 if (spanLeft != 0) {

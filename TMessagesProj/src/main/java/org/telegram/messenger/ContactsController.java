@@ -85,10 +85,14 @@ public class ContactsController extends BaseController {
     private class MyContentObserver extends ContentObserver {
 
         private Runnable checkRunnable = () -> {
-            for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
+            for (int a : SharedConfig.activeAccounts) {
                 if (UserConfig.getInstance(a).isClientActivated()) {
                     ConnectionsManager.getInstance(a).resumeNetworkMaybe();
                     ContactsController.getInstance(a).checkContacts();
+                }
+                if (SharedConfig.loginingAccount != -1) {
+                    ConnectionsManager.getInstance(SharedConfig.loginingAccount).resumeNetworkMaybe();
+                    ContactsController.getInstance(SharedConfig.loginingAccount).checkContacts();
                 }
             }
         };
@@ -179,15 +183,16 @@ public class ContactsController extends BaseController {
     public HashMap<String, TLRPC.TL_contact> contactsByShortPhone = new HashMap<>();
 
     private int completedRequestsCount;
-    
-    private static volatile ContactsController[] Instance = new ContactsController[UserConfig.MAX_ACCOUNT_COUNT];
+
+    private static SparseArray<ContactsController> Instance = new SparseArray();
+
     public static ContactsController getInstance(int num) {
-        ContactsController localInstance = Instance[num];
+        ContactsController localInstance = Instance.get(num);
         if (localInstance == null) {
             synchronized (ContactsController.class) {
-                localInstance = Instance[num];
+                localInstance = Instance.get(num);
                 if (localInstance == null) {
-                    Instance[num] = localInstance = new ContactsController(num);
+                    Instance.put(num, localInstance = new ContactsController(num));
                 }
             }
         }
@@ -293,7 +298,7 @@ public class ContactsController extends BaseController {
                             SharedPreferences.Editor editor = preferences1.edit();
                             editor.putString("invitelink", inviteLink = res.message);
                             editor.putInt("invitelinktime", (int) (System.currentTimeMillis() / 1000));
-                            editor.commit();
+                            editor.apply();
                         });
                     }
                 }
@@ -302,7 +307,7 @@ public class ContactsController extends BaseController {
     }
 
     public String getInviteText(int contacts) {
-        String link = "https://github.com/nikitasius/Telegraher/releases";
+        String link = inviteLink == null ? "https://github.com/nikitasius/Telegraher/releases" : inviteLink;
         if (contacts <= 1) {
             return LocaleController.formatString("InviteText2", R.string.InviteText2, link);
         } else {
@@ -322,12 +327,12 @@ public class ContactsController extends BaseController {
         if (true) return;
         AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
         try {
-            Account[] accounts = am.getAccountsByType("org.telegram.messenger");
+            Account[] accounts = am.getAccountsByType(BuildVars.BUILD_DUROV);
             systemAccount = null;
             for (int a = 0; a < accounts.length; a++) {
                 Account acc = accounts[a];
                 boolean found = false;
-                for (int b = 0; b < UserConfig.MAX_ACCOUNT_COUNT; b++) {
+                for (int b : SharedConfig.activeAccounts) {
                     TLRPC.User user = UserConfig.getInstance(b).getCurrentUser();
                     if (user != null) {
                         if (acc.name.equals("" + user.id)) {
@@ -355,7 +360,7 @@ public class ContactsController extends BaseController {
             readContacts();
             if (systemAccount == null) {
                 try {
-                    systemAccount = new Account("" + getUserConfig().getClientUserId(), "org.telegram.messenger");
+                    systemAccount = new Account("" + getUserConfig().getClientUserId(), BuildVars.BUILD_DUROV);
                     am.addAccountExplicitly(systemAccount, "", null);
                 } catch (Exception ignore) {
 
@@ -369,11 +374,11 @@ public class ContactsController extends BaseController {
         try {
             systemAccount = null;
             AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
-            Account[] accounts = am.getAccountsByType("org.telegram.messenger");
+            Account[] accounts = am.getAccountsByType(BuildVars.BUILD_DUROV);
             for (int a = 0; a < accounts.length; a++) {
                 Account acc = accounts[a];
                 boolean found = false;
-                for (int b = 0; b < UserConfig.MAX_ACCOUNT_COUNT; b++) {
+                for (int b : SharedConfig.activeAccounts) {
                     TLRPC.User user = UserConfig.getInstance(b).getCurrentUser();
                     if (user != null) {
                         if (acc.name.equals("" + user.id)) {
@@ -446,11 +451,11 @@ public class ContactsController extends BaseController {
                     if (false) {
                         AccountManager am = AccountManager.get(ApplicationLoader.applicationContext);
                         try {
-                            Account[] accounts = am.getAccountsByType("org.telegram.messenger");
+                            Account[] accounts = am.getAccountsByType(BuildVars.BUILD_DUROV);
                             systemAccount = null;
                             for (int a = 0; a < accounts.length; a++) {
                                 Account acc = accounts[a];
-                                for (int b = 0; b < UserConfig.MAX_ACCOUNT_COUNT; b++) {
+                                for (int b : SharedConfig.activeAccounts) {
                                     TLRPC.User user = UserConfig.getInstance(b).getCurrentUser();
                                     if (user != null) {
                                         if (acc.name.equals("" + user.id)) {
@@ -464,7 +469,7 @@ public class ContactsController extends BaseController {
 
                         }
                         try {
-                            systemAccount = new Account("" + getUserConfig().getClientUserId(), "org.telegram.messenger");
+                            systemAccount = new Account("" + getUserConfig().getClientUserId(), BuildVars.BUILD_DUROV);
                             am.addAccountExplicitly(systemAccount, "", null);
                         } catch (Exception ignore) {
 
@@ -1619,7 +1624,7 @@ public class ContactsController extends BaseController {
     private void saveContactsLoadTime() {
         try {
             SharedPreferences preferences = MessagesController.getMainSettings(currentAccount);
-            preferences.edit().putLong("lastReloadStatusTime", System.currentTimeMillis()).commit();
+            preferences.edit().putLong("lastReloadStatusTime", System.currentTimeMillis()).apply();
         } catch (Exception e) {
             FileLog.e(e);
         }
@@ -1840,10 +1845,10 @@ public class ContactsController extends BaseController {
             final SharedPreferences settings = MessagesController.getMainSettings(currentAccount);
             final boolean forceUpdate = !settings.getBoolean("contacts_updated_v7", false);
             if (forceUpdate) {
-                settings.edit().putBoolean("contacts_updated_v7", true).commit();
+                settings.edit().putBoolean("contacts_updated_v7", true).apply();
             }
             final ContentResolver contentResolver = ApplicationLoader.applicationContext.getContentResolver();
-            Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, "org.telegram.messenger").build();
+            Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, BuildVars.BUILD_DUROV).build();
             cursor = contentResolver.query(rawContactUri, new String[]{BaseColumns._ID, ContactsContract.RawContacts.SYNC2}, null, null, null);
             LongSparseArray<Long> bookContacts = new LongSparseArray<>();
             if (cursor != null) {
@@ -2049,7 +2054,7 @@ public class ContactsController extends BaseController {
         ContentResolver contentResolver = ApplicationLoader.applicationContext.getContentResolver();
         if (check) {
             try {
-                Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, "org.telegram.messenger").build();
+                Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, BuildVars.BUILD_DUROV).build();
                 int value = contentResolver.delete(rawContactUri, ContactsContract.RawContacts.SYNC2 + " = " + user.id, null);
             } catch (Exception ignore) {
 
@@ -2060,7 +2065,7 @@ public class ContactsController extends BaseController {
 
         ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI);
         builder.withValue(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString());
-        builder.withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "org.telegram.messenger");
+        builder.withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, BuildVars.BUILD_DUROV);
         builder.withValue(ContactsContract.RawContacts.SYNC1, TextUtils.isEmpty(user.phone) ? "" : user.phone);
         builder.withValue(ContactsContract.RawContacts.SYNC2, user.id);
         query.add(builder.build());
@@ -2131,7 +2136,7 @@ public class ContactsController extends BaseController {
         }
         try {
             ContentResolver contentResolver = ApplicationLoader.applicationContext.getContentResolver();
-            Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, "org.telegram.messenger").build();
+            Uri rawContactUri = ContactsContract.RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER, "true").appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()).appendQueryParameter(ContactsContract.RawContacts.ACCOUNT_TYPE, BuildVars.BUILD_DUROV).build();
             int value = contentResolver.delete(rawContactUri, ContactsContract.RawContacts.SYNC2 + " = " + uid, null);
         } catch (Exception e) {
             FileLog.e(e);
@@ -2296,12 +2301,12 @@ public class ContactsController extends BaseController {
         getMessagesController().clearFullUsers();
         SharedPreferences preferences = MessagesController.getMainSettings(currentAccount);
         final SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("needGetStatuses", true).commit();
+        editor.putBoolean("needGetStatuses", true).apply();
         TLRPC.TL_contacts_getStatuses req = new TLRPC.TL_contacts_getStatuses();
         getConnectionsManager().sendRequest(req, (response, error) -> {
             if (error == null) {
                 AndroidUtilities.runOnUIThread(() -> {
-                    editor.remove("needGetStatuses").commit();
+                    editor.remove("needGetStatuses").apply();
                     TLRPC.Vector vector = (TLRPC.Vector) response;
                     if (!vector.objects.isEmpty()) {
                         ArrayList<TLRPC.User> dbUsersStatus = new ArrayList<>();
@@ -2534,7 +2539,7 @@ public class ContactsController extends BaseController {
             // 1. Check if we already have the invisible group/label and create it if we don't
             Cursor cursor = resolver.query(groupsURI, new String[]{ContactsContract.Groups._ID},
                     ContactsContract.Groups.TITLE + "=? AND " + ContactsContract.Groups.ACCOUNT_TYPE + "=? AND " + ContactsContract.Groups.ACCOUNT_NAME + "=?",
-                    new String[]{"TelegramConnectionService", "org.telegram.messenger", Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()}, null);
+                    new String[]{"TelegramConnectionService", BuildVars.BUILD_DUROV, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()}, null);
             int groupID;
             if (cursor != null && cursor.moveToFirst()) {
                 groupID = cursor.getInt(0);
@@ -2544,7 +2549,7 @@ public class ContactsController extends BaseController {
                         .build());*/
             } else {
                 ContentValues values = new ContentValues();
-                values.put(ContactsContract.Groups.ACCOUNT_TYPE, "org.telegram.messenger");
+                values.put(ContactsContract.Groups.ACCOUNT_TYPE, BuildVars.BUILD_DUROV);
                 values.put(ContactsContract.Groups.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString());
                 values.put(ContactsContract.Groups.GROUP_VISIBLE, 0);
                 values.put(ContactsContract.Groups.GROUP_IS_READ_ONLY, 1);
@@ -2579,7 +2584,7 @@ public class ContactsController extends BaseController {
                         .build());
             } else {
                 ops.add(ContentProviderOperation.newInsert(rawContactsURI)
-                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "org.telegram.messenger")
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, BuildVars.BUILD_DUROV)
                         .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString())
                         .withValue(ContactsContract.RawContacts.RAW_CONTACT_IS_READ_ONLY, 1)
                         .withValue(ContactsContract.RawContacts.AGGREGATION_MODE, ContactsContract.RawContacts.AGGREGATION_MODE_DISABLED)
@@ -2620,7 +2625,7 @@ public class ContactsController extends BaseController {
 
             Cursor cursor = resolver.query(ContactsContract.Groups.CONTENT_URI, new String[]{ContactsContract.Groups._ID},
                     ContactsContract.Groups.TITLE + "=? AND " + ContactsContract.Groups.ACCOUNT_TYPE + "=? AND " + ContactsContract.Groups.ACCOUNT_NAME + "=?",
-                    new String[]{"TelegramConnectionService", "org.telegram.messenger", Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()}, null);
+                    new String[]{"TelegramConnectionService", BuildVars.BUILD_DUROV, Long.valueOf(UserConfig.getInstance(currentAccount).getClientUserId()).toString()}, null);
             int groupID;
             if (cursor != null && cursor.moveToFirst()) {
                 groupID = cursor.getInt(0);

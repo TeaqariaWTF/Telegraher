@@ -56,8 +56,6 @@ import androidx.collection.LongSparseArray;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BuildVars;
@@ -253,7 +251,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                     SharedConfig.toggleSortContactsByName();
                     sortByName = SharedConfig.sortContactsByName;
                     listViewAdapter.setSortType(sortByName ? 1 : 2, false);
-                    sortItem.setIcon(sortByName ? R.drawable.contacts_sort_time : R.drawable.contacts_sort_name);
+                    sortItem.setIcon(sortByName ? R.drawable.msg_contacts_time : R.drawable.msg_contacts_name);
                 }
             }
         });
@@ -321,7 +319,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
         item.setSearchFieldHint(LocaleController.getString("Search", R.string.Search));
         item.setContentDescription(LocaleController.getString("Search", R.string.Search));
         if (!createSecretChat && !returnAsResult) {
-            sortItem = menu.addItem(sort_button, sortByName ? R.drawable.contacts_sort_time : R.drawable.contacts_sort_name);
+            sortItem = menu.addItem(sort_button, sortByName ? R.drawable.msg_contacts_time : R.drawable.msg_contacts_name);
             sortItem.setContentDescription(LocaleController.getString("AccDescrContactSorting", R.string.AccDescrContactSorting));
         }
 
@@ -515,7 +513,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                                 presentFragment(new ChannelCreateActivity(args));
                             } else {
                                 presentFragment(new ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANNEL_CREATE));
-                                preferences.edit().putBoolean("channel_intro", true).commit();
+                                preferences.edit().putBoolean("channel_intro", true).apply();
                             }
                         }
                     }
@@ -856,7 +854,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
         ArrayList<String> permissons = new ArrayList<>();
         permissons.add(Manifest.permission.READ_CONTACTS);
         permissons.add(Manifest.permission.WRITE_CONTACTS);
-        permissons.add(Manifest.permission.GET_ACCOUNTS);
+//        permissons.add(Manifest.permission.GET_ACCOUNTS);
         String[] items = permissons.toArray(new String[0]);
         try {
             activity.requestPermissions(items, 1);
@@ -876,7 +874,7 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
                     if (grantResults[a] == PackageManager.PERMISSION_GRANTED) {
                         ContactsController.getInstance(currentAccount).forceImportContacts();
                     } else {
-                        MessagesController.getGlobalNotificationsSettings().edit().putBoolean("askAboutContacts", askAboutContacts = false).commit();
+                        MessagesController.getGlobalNotificationsSettings().edit().putBoolean("askAboutContacts", askAboutContacts = false).apply();
                         if (SystemClock.elapsedRealtime() - permissionRequestTime < 200) {
                             try {
                                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -1265,7 +1263,6 @@ public class ContactsActivity extends BaseFragment implements NotificationCenter
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{GraySectionCell.class}, new String[]{"textView"}, null, null, null, Theme.key_graySectionText));
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CELLBACKGROUNDCOLOR, new Class[]{GraySectionCell.class}, null, null, null, Theme.key_graySection));
 
-        themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{ProfileSearchCell.class}, null, new Drawable[]{Theme.dialogs_groupDrawable, Theme.dialogs_broadcastDrawable, Theme.dialogs_botDrawable}, null, Theme.key_chats_nameIcon));
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{ProfileSearchCell.class}, null, new Drawable[]{Theme.dialogs_verifiedCheckDrawable}, null, Theme.key_chats_verifiedCheck));
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{ProfileSearchCell.class}, null, new Drawable[]{Theme.dialogs_verifiedDrawable}, null, Theme.key_chats_verifiedBackground));
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{ProfileSearchCell.class}, Theme.dialogs_offlinePaint, null, null, Theme.key_windowBackgroundWhiteGrayText3));

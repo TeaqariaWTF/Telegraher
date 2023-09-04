@@ -19,8 +19,6 @@
 #include <memory>
 #include <string>
 #include <cinttypes>
-#include <map>
-#include <iostream>
 #include "ConnectionsManager.h"
 #include "FileLog.h"
 #include "EventObject.h"
@@ -38,13 +36,12 @@
 #ifdef ANDROID
 #include <jni.h>
 JavaVM *javaVm = nullptr;
-JNIEnv *jniEnv[MAX_ACCOUNT_COUNT];
+std::vector<JNIEnv*> jniEnv(10);
 jclass jclass_ByteBuffer = nullptr;
 jmethodID jclass_ByteBuffer_allocateDirect = nullptr;
 #endif
 
 static bool done = false;
-static std::map<std::int32_t, ConnectionsManager*> mInstances;
 
 ConnectionsManager::ConnectionsManager(int32_t instance) {
     instanceNum = instance;
@@ -137,13 +134,16 @@ ConnectionsManager::~ConnectionsManager() {
     pthread_mutex_destroy(&mutex);
 }
 
-ConnectionsManager &ConnectionsManager::getInstance(int32_t instanceNum) {
-    static std::mutex the_mutex;
-    the_mutex.lock();
-    if (mInstances.find(instanceNum) == mInstances.end())
-        mInstances[instanceNum] = new ConnectionsManager(instanceNum);
-    the_mutex.unlock();
-    return *mInstances[instanceNum];
+std::vector<ConnectionsManager*> ConnectionsManager::_instances = std::vector<ConnectionsManager*>(10);
+ConnectionsManager& ConnectionsManager::getInstance(int32_t instanceNum) {
+    static std::mutex the_mutexInst;
+    the_mutexInst.lock();
+    if (instanceNum >= _instances.capacity()) {
+        _instances.resize(instanceNum + 10, nullptr);
+    }
+    if(_instances[instanceNum] == nullptr) _instances[instanceNum] = new ConnectionsManager(instanceNum);
+    the_mutexInst.unlock();
+    return *_instances[instanceNum];
 }
 
 int ConnectionsManager::callEvents(int64_t now) {
@@ -3002,8 +3002,13 @@ void ConnectionsManager::updateDcSettings(uint32_t dcNum, bool workaround) {
                     if (dcOption->secret != nullptr) {
                         secret = std::string((const char *) dcOption->secret->bytes, dcOption->secret->length);
                     }
-                    if (LOGS_ENABLED) DEBUG_D("getConfig add %s:%d to dc%d, flags %d, has secret = %d[%d]", dcOption->ip_address.c_str(), dcOption->port, dcOption->id, dcOption->flags, dcOption->secret != nullptr ? 1 : 0, dcOption->secret != nullptr ? dcOption->secret->length : 0);
-                    addresses->push_back(TcpAddress(dcOption->ip_address, dcOption->port, dcOption->flags, secret));
+                    if (LOGS_ENABLED) DEBUG_D("getConfig add %s:%d to dc%d, flags %d, has_secret = %d[%d], try_this_port_only = %d", dcOption->ip_address.c_str(), dcOption->port, dcOption->id, dcOption->flags, dcOption->secret != nullptr ? 1 : 0, dcOption->secret != nullptr ? dcOption->secret->length : 0, dcOption->thisPortOnly ? 1 : 0);
+                    if (dcOption->thisPortOnly) {
+                        addresses->insert(addresses->begin(), TcpAddress(dcOption->ip_address, dcOption->port, dcOption->flags, secret));
+                    } else {
+                        addresses->push_back(TcpAddress(dcOption->ip_address, dcOption->port, dcOption->flags, secret));
+                    }
+
                 }
             };
 

@@ -30,10 +30,11 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Build;
 import android.os.IBinder;
-import androidx.core.app.NotificationCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.RemoteViews;
+
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.exoplayer2.C;
 
@@ -84,9 +85,8 @@ public class MusicPlayerService extends Service implements NotificationCenter.No
     @Override
     public void onCreate() {
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY MusicPlayerService onDestroy [%d]%n", a);
+//        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.accountLogin);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingDidSeek);
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
             NotificationCenter.getInstance(a).addObserver(this, NotificationCenter.httpFileDidLoad);
@@ -241,7 +241,7 @@ public class MusicPlayerService extends Service implements NotificationCenter.No
                 albumArt = loadArtworkFromUrl(artworkUrlBig, false, !forBitmap);
             }
         } else {
-            loadingFilePath = FileLoader.getPathToAttach(messageObject.getDocument()).getAbsolutePath();
+            loadingFilePath = FileLoader.getInstance(UserConfig.selectedAccount).getPathToAttach(messageObject.getDocument()).getAbsolutePath();
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -507,9 +507,8 @@ public class MusicPlayerService extends Service implements NotificationCenter.No
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mediaSession.release();
         }
-        for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (!UserConfig.existsInHsAccs(a)) continue;
-            if (UserConfig.TDBG) System.out.printf("HEY MusicPlayerService onDestroy [%d]%n", a);
+//        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.accountLogin);
+        for (int a : SharedConfig.activeAccounts) {
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingDidSeek);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.messagePlayingPlayStateChanged);
             NotificationCenter.getInstance(a).removeObserver(this, NotificationCenter.httpFileDidLoad);

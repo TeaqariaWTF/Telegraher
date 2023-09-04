@@ -35,8 +35,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
+import androidx.annotation.Keep;
+
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -46,8 +46,6 @@ import org.telegram.ui.ActionBar.ThemeDescription;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.annotation.Keep;
 
 public class ColorPicker extends FrameLayout {
 
@@ -393,7 +391,7 @@ public class ColorPicker extends FrameLayout {
 
         addButton = new ImageView(getContext());
         addButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector), 1));
-        addButton.setImageResource(R.drawable.themes_addcolor);
+        addButton.setImageResource(R.drawable.msg_add);
         addButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
         addButton.setScaleType(ImageView.ScaleType.CENTER);
         addButton.setOnClickListener(v -> {
@@ -487,7 +485,7 @@ public class ColorPicker extends FrameLayout {
             }
         };
         clearButton.setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_dialogButtonSelector), 1));
-        clearButton.setImageResource(R.drawable.themes_deletecolor);
+        clearButton.setImageResource(R.drawable.msg_close);
         clearButton.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText), PorterDuff.Mode.MULTIPLY));
         clearButton.setAlpha(0.0f);
         clearButton.setScaleX(0.0f);
@@ -565,7 +563,7 @@ public class ColorPicker extends FrameLayout {
 
         resetButton = new TextView(context);
         resetButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        resetButton.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        resetButton.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         resetButton.setGravity(Gravity.CENTER);
         resetButton.setPadding(AndroidUtilities.dp(4), 0, AndroidUtilities.dp(4), 0);
         resetButton.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));

@@ -21,8 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.collection.LongSparseArray;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
@@ -77,10 +75,11 @@ public class BotCommandsMenuView extends View {
         backDrawable.setRotateToBack(false);
         backDrawable.setRotation(0f, false);
         backDrawable.setCallback(this);
-        textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         backDrawable.setRoundCap();
         backgroundDrawable = Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(16), Color.TRANSPARENT, Theme.getColor(Theme.key_featuredStickers_addButtonPressed));
         backgroundDrawable.setCallback(this);
+        setContentDescription(LocaleController.getString("AccDescrBotMenu", R.string.AccDescrBotMenu));
     }
 
     public void setDrawBackgroundDrawable(boolean drawBackgroundDrawable) {
@@ -207,13 +206,15 @@ public class BotCommandsMenuView extends View {
 
     }
 
-    public void setMenuText(String menuText) {
+    public boolean setMenuText(String menuText) {
         if (menuText == null) {
             menuText = LocaleController.getString(R.string.BotsMenuTitle);
         }
+        boolean changed = this.menuText == null || !this.menuText.equals(menuText);
         this.menuText = menuText;
         menuTextLayout = null;
         requestLayout();
+        return changed;
     }
 
     public void setExpanded(boolean expanded, boolean animated) {

@@ -22,6 +22,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -32,8 +33,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ChatThemeController;
@@ -115,7 +114,7 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
         titleView.setText(LocaleController.getString("SelectTheme", R.string.SelectTheme));
         titleView.setTextColor(getThemedColor(Theme.key_dialogTextBlack));
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
-        titleView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         titleView.setPadding(AndroidUtilities.dp(21), AndroidUtilities.dp(6), AndroidUtilities.dp(21), AndroidUtilities.dp(8));
         rootLayout.addView(titleView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.START, 0, 0, 62, 0));
 
@@ -128,7 +127,17 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
         darkThemeDrawable.setPlayInDirectionOfCustomEndFrame(true);
         darkThemeDrawable.setColorFilter(new PorterDuffColorFilter(drawableColor, PorterDuff.Mode.MULTIPLY));
 
-        darkThemeView = new RLottieImageView(getContext());
+        darkThemeView = new RLottieImageView(getContext()){
+            @Override
+            public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+                super.onInitializeAccessibilityNodeInfo(info);
+                if (forceDark) {
+                    info.setText(LocaleController.getString("AccDescrSwitchToDayTheme", R.string.AccDescrSwitchToDayTheme));
+                } else {
+                    info.setText(LocaleController.getString("AccDescrSwitchToNightTheme", R.string.AccDescrSwitchToNightTheme));
+                }
+            }
+        };
         darkThemeView.setAnimation(darkThemeDrawable);
         darkThemeView.setScaleType(ImageView.ScaleType.CENTER);
         darkThemeView.setOnClickListener(view -> {
@@ -220,7 +229,7 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
         resetTextView.setText(themeDelegate.getCurrentTheme() == null ? LocaleController.getString("DoNoSetTheme", R.string.DoNoSetTheme) : LocaleController.getString("ChatResetTheme", R.string.ChatResetTheme));
         resetTextView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
         resetTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        resetTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        resetTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         resetTextView.setVisibility(View.INVISIBLE);
         rootLayout.addView(resetTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.START, 16, 162, 16, 16));
 
@@ -232,7 +241,7 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
         applyTextView.setText(LocaleController.getString("ChatApplyTheme", R.string.ChatApplyTheme));
         applyTextView.setTextColor(getThemedColor(Theme.key_featuredStickers_buttonText));
         applyTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        applyTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        applyTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         applyTextView.setVisibility(View.INVISIBLE);
         rootLayout.addView(applyTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.START, 16, 162, 16, 16));
     }
@@ -698,6 +707,10 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
                 animated = false;
             }
 
+            view.setFocusable(true);
+            view.setEnabled(true);
+
+            view.setBackgroundColor(Theme.getColor(Theme.key_dialogBackgroundGray));
             view.setItem(newItem, animated);
             view.setSelected(position == selectedItemPosition, animated);
             if (position == selectedItemPosition) {

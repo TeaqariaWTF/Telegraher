@@ -22,8 +22,6 @@ import android.widget.ImageView;
 import androidx.core.graphics.ColorUtils;
 import androidx.core.view.GestureDetectorCompat;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
@@ -144,7 +142,7 @@ public class CustomPhoneKeyboardView extends ViewGroup {
                 return backDetector.onTouchEvent(event);
             }
         };
-        backButton.setImageResource(R.drawable.menu_clear);
+        backButton.setImageResource(R.drawable.msg_clear_input);
         backButton.setColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         backButton.setBackground(getButtonDrawable());
         int pad = AndroidUtilities.dp(11);

@@ -5,11 +5,12 @@ import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -19,8 +20,6 @@ import android.widget.TextView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.LocaleController;
@@ -31,6 +30,7 @@ import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.TextCheckCell2;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RLottieImageView;
@@ -48,6 +48,7 @@ public class SessionBottomSheet extends BottomSheet {
         Context context = fragment.getParentActivity();
         this.session = session;
         this.parentFragment = fragment;
+        fixNavigationBar();
 
         LinearLayout linearLayout = new LinearLayout(context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -67,7 +68,7 @@ public class SessionBottomSheet extends BottomSheet {
 
         TextView nameView = new TextView(context);
         nameView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-        nameView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        nameView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         nameView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         nameView.setGravity(Gravity.CENTER);
         linearLayout.addView(nameView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 21, 12, 21, 0));
@@ -121,7 +122,7 @@ public class SessionBottomSheet extends BottomSheet {
         if (session.country.length() != 0) {
             ItemView locationItemView = new ItemView(context, false);
             locationItemView.valueText.setText(session.country);
-            drawable = ContextCompat.getDrawable(context, R.drawable.menu_location).mutate();
+            drawable = ContextCompat.getDrawable(context, R.drawable.msg_location).mutate();
             drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.SRC_IN));
             locationItemView.iconView.setImageDrawable(drawable);
             locationItemView.descriptionText.setText(LocaleController.getString("Location", R.string.Location));
@@ -151,7 +152,7 @@ public class SessionBottomSheet extends BottomSheet {
         if (session.ip.length() != 0) {
             ItemView locationItemView = new ItemView(context, false);
             locationItemView.valueText.setText(session.ip);
-            drawable = ContextCompat.getDrawable(context, R.drawable.menu_language).mutate();
+            drawable = ContextCompat.getDrawable(context, R.drawable.msg_language).mutate();
             drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.SRC_IN));
             locationItemView.iconView.setImageDrawable(drawable);
             locationItemView.descriptionText.setText(LocaleController.getString("IpAddress", R.string.IpAddress));
@@ -184,7 +185,7 @@ public class SessionBottomSheet extends BottomSheet {
         if (secretChatsEnabled(session)) {
             ItemView acceptSecretChats = new ItemView(context, true);
             acceptSecretChats.valueText.setText(LocaleController.getString("AcceptSecretChats", R.string.AcceptSecretChats));
-            drawable = ContextCompat.getDrawable(context, R.drawable.menu_secret).mutate();
+            drawable = ContextCompat.getDrawable(context, R.drawable.msg_secret).mutate();
             drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.SRC_IN));
             acceptSecretChats.iconView.setImageDrawable(drawable);
             acceptSecretChats.switchView.setChecked(!session.encrypted_requests_disabled, false);
@@ -208,7 +209,7 @@ public class SessionBottomSheet extends BottomSheet {
 
         ItemView acceptCalls = new ItemView(context, true);
         acceptCalls.valueText.setText(LocaleController.getString("AcceptCalls", R.string.AcceptCalls));
-        drawable = ContextCompat.getDrawable(context, R.drawable.menu_calls).mutate();
+        drawable = ContextCompat.getDrawable(context, R.drawable.msg_calls).mutate();
         drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.SRC_IN));
         acceptCalls.iconView.setImageDrawable(drawable);
         acceptCalls.switchView.setChecked(!session.call_requests_disabled, false);
@@ -233,11 +234,11 @@ public class SessionBottomSheet extends BottomSheet {
             buttonTextView.setPadding(AndroidUtilities.dp(34), 0, AndroidUtilities.dp(34), 0);
             buttonTextView.setGravity(Gravity.CENTER);
             buttonTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-            buttonTextView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+            buttonTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
             buttonTextView.setText(LocaleController.getString("TerminateSession", R.string.TerminateSession));
 
             buttonTextView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
-            buttonTextView.setBackgroundDrawable(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_chat_attachAudioBackground), ColorUtils.setAlphaComponent(Theme.getColor(Theme.key_windowBackgroundWhite), 120)));
+            buttonTextView.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_chat_attachAudioBackground), ColorUtils.setAlphaComponent(Theme.getColor(Theme.key_windowBackgroundWhite), 120)));
 
             linearLayout.addView(buttonTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, 0, 16, 15, 16, 16));
 
@@ -400,12 +401,6 @@ public class SessionBottomSheet extends BottomSheet {
                 switchView.setDrawIconType(1);
                 addView(switchView, LayoutHelper.createFrame(37, 40, Gravity.RIGHT | Gravity.CENTER_VERTICAL, 21, 0, 21, 0));
             }
-            setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "regular")));
-        }
-
-        public void setTypeface(Typeface font) {
-            if (this.valueText != null) this.valueText.setTypeface(font);
-            if (this.descriptionText != null) this.descriptionText.setTypeface(font);
         }
 
         @Override
@@ -413,6 +408,17 @@ public class SessionBottomSheet extends BottomSheet {
             super.dispatchDraw(canvas);
             if (needDivider) {
                 canvas.drawRect(AndroidUtilities.dp(64), getMeasuredHeight() - 1, getMeasuredWidth(), getMeasuredHeight(), Theme.dividerPaint);
+            }
+        }
+
+        @Override
+        public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+            super.onInitializeAccessibilityNodeInfo(info);
+            if (switchView != null) {
+                info.setClassName("android.widget.Switch");
+                info.setCheckable(true);
+                info.setChecked(switchView.isChecked());
+                info.setText(valueText.getText() + "\n" + descriptionText.getText() + "\n" + (switchView.isChecked() ? LocaleController.getString("NotificationsOn", R.string.NotificationsOn) : LocaleController.getString("NotificationsOff", R.string.NotificationsOff)));
             }
         }
     }

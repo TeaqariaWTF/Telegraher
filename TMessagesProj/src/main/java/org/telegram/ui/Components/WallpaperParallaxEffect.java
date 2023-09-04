@@ -16,8 +16,6 @@ import android.hardware.SensorManager;
 import android.view.Surface;
 import android.view.WindowManager;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 
 public class WallpaperParallaxEffect implements SensorEventListener {

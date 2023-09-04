@@ -27,12 +27,6 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.SpannableStringBuilder;
@@ -46,16 +40,18 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ChatsWidgetProvider;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.ContactsWidgetProvider;
 import org.telegram.messenger.DialogObject;
-import org.telegram.messenger.FileLoader;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
@@ -293,7 +289,7 @@ public class EditWidgetActivity extends BaseFragment {
                     try {
                         Bitmap bitmap = null;
                         if (photoPath != null) {
-                            File path = FileLoader.getPathToAttach(photoPath, true);
+                            File path = getFileLoader().getPathToAttach(photoPath, true);
                             bitmap = BitmapFactory.decodeFile(path.toString());
                         }
 
@@ -566,7 +562,7 @@ public class EditWidgetActivity extends BaseFragment {
                         try {
                             Bitmap bitmap = null;
                             if (photoPath != null) {
-                                File path = FileLoader.getPathToAttach(photoPath, true);
+                                File path = getFileLoader().getPathToAttach(photoPath, true);
                                 bitmap = BitmapFactory.decodeFile(path.toString());
                             }
 
@@ -810,7 +806,7 @@ public class EditWidgetActivity extends BaseFragment {
                     SharedPreferences.Editor editor = preferences.edit();
                     editor.putInt("account" + currentWidgetId, currentAccount);
                     editor.putInt("type" + currentWidgetId, widgetType);
-                    editor.commit();
+                    editor.apply();
 
                     AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getParentActivity());
                     if (widgetType == TYPE_CHATS) {

@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import org.telegram.messenger.AccountInstance;
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FeedWidgetProvider;
 
@@ -40,7 +38,7 @@ public class FeedWidgetConfigActivity extends ExternalActionActivity {
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putInt("account" + creatingAppWidgetId, fragment1.getCurrentAccount());
                 editor.putLong("dialogId" + creatingAppWidgetId, dids.get(0));
-                editor.commit();
+                editor.apply();
 
                 AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(FeedWidgetConfigActivity.this);
                 FeedWidgetProvider.updateWidget(FeedWidgetConfigActivity.this, appWidgetManager, creatingAppWidgetId);

@@ -7,8 +7,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DownloadController;
 import org.telegram.messenger.FileLoader;
@@ -45,7 +43,9 @@ public class DownloadProgressIcon extends View implements NotificationCenter.Not
         this.currentAccount = currentAccount;
 
         downloadDrawable = new RLottieDrawable(R.raw.download_progress, "download_progress", AndroidUtilities.dp(28), AndroidUtilities.dp(28), true, null);
+        downloadDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultIcon), PorterDuff.Mode.MULTIPLY));
         downloadCompleteDrawable = new RLottieDrawable(R.raw.download_finish, "download_finish", AndroidUtilities.dp(28), AndroidUtilities.dp(28), true, null);
+        downloadCompleteDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultIcon), PorterDuff.Mode.MULTIPLY));
 
         downloadImageReceiver.setImageBitmap(downloadDrawable);
         downloadCompleteImageReceiver.setImageBitmap(downloadCompleteDrawable);

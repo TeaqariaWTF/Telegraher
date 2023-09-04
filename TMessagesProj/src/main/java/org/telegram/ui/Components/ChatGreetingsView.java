@@ -1,14 +1,13 @@
 package org.telegram.ui.Components;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.FileLoader;
@@ -34,6 +33,7 @@ public class ChatGreetingsView extends LinearLayout {
 
     public BackupImageView stickerToSendView;
     private final Theme.ResourcesProvider resourcesProvider;
+    boolean wasDraw;
 
     public ChatGreetingsView(Context context, TLRPC.User user, int distance, int currentAccount, TLRPC.Document sticker, Theme.ResourcesProvider resourcesProvider) {
         super(context);
@@ -43,7 +43,7 @@ public class ChatGreetingsView extends LinearLayout {
 
         titleView = new TextView(context);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
-        titleView.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        titleView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
         titleView.setGravity(Gravity.CENTER_HORIZONTAL);
 
         descriptionView = new TextView(context);
@@ -66,12 +66,12 @@ public class ChatGreetingsView extends LinearLayout {
             titleView.setText(LocaleController.formatString("NearbyPeopleGreetingsMessage", R.string.NearbyPeopleGreetingsMessage, user.first_name, LocaleController.formatDistance(distance, 1)));
             descriptionView.setText(LocaleController.getString("NearbyPeopleGreetingsDescription", R.string.NearbyPeopleGreetingsDescription));
         }
+        stickerToSendView.setContentDescription(descriptionView.getText());
 
         preloadedGreetingsSticker = sticker;
         if (preloadedGreetingsSticker == null) {
             preloadedGreetingsSticker = MediaDataController.getInstance(currentAccount).getGreetingsSticker();
         }
-        setSticker(preloadedGreetingsSticker);
     }
 
     private void setSticker(TLRPC.Document sticker) {
@@ -163,6 +163,15 @@ public class ChatGreetingsView extends LinearLayout {
     }
 
     @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (!wasDraw) {
+            wasDraw = true;
+            setSticker(preloadedGreetingsSticker);
+        }
+        super.dispatchDraw(canvas);
+    }
+
+    @Override
     public void requestLayout() {
         if (ignoreLayot) {
             return;
@@ -184,7 +193,9 @@ public class ChatGreetingsView extends LinearLayout {
     private void fetchSticker() {
         if (preloadedGreetingsSticker == null) {
             preloadedGreetingsSticker = MediaDataController.getInstance(currentAccount).getGreetingsSticker();
-            setSticker(preloadedGreetingsSticker);
+            if (wasDraw) {
+                setSticker(preloadedGreetingsSticker);
+            }
         }
     }
 

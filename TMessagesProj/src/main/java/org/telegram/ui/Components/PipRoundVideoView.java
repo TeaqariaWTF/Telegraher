@@ -40,8 +40,6 @@ import android.widget.ImageView;
 
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.Bitmaps;
@@ -498,7 +496,7 @@ public class PipRoundVideoView implements NotificationCenter.NotificationCenterD
                 editor.putFloat("py", (windowLayoutParams.y - startY) / (float) (endY - startY));
                 editor.putInt("sidey", 2);
             }
-            editor.commit();
+            editor.apply();
         }
         if (animators != null) {
             if (decelerateInterpolator == null) {

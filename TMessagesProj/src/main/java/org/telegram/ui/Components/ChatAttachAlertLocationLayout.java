@@ -4,8 +4,6 @@
  * You should have received a copy of the license in this archive (see LICENSE).
  *
  * Copyright Nikolai Kudashov, 2013-2018.
- *
- * hey hey hye, thanks TG-FOSS!  🃏 🔞 👯
  */
 
 package org.telegram.ui.Components;
@@ -33,7 +31,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Build;
 import android.text.Html;
 import android.text.TextUtils;
@@ -50,7 +47,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.api.IMapController;
@@ -588,7 +584,7 @@ public class ChatAttachAlertLocationLayout extends ChatAttachAlert.AttachAlertLa
             });
         }
         mapTypeButton.setBackgroundDrawable(drawable);
-        mapTypeButton.setIcon(R.drawable.location_type);
+        mapTypeButton.setIcon(R.drawable.msg_map_type);
         mapViewClip.addView(mapTypeButton, LayoutHelper.createFrame(Build.VERSION.SDK_INT >= 21 ? 40 : 44, Build.VERSION.SDK_INT >= 21 ? 40 : 44, Gravity.RIGHT | Gravity.TOP, 0, 12, 12, 0));
         mapTypeButton.setOnClickListener(v -> mapTypeButton.toggleSubMenu());
         mapTypeButton.setDelegate(id -> {
@@ -646,7 +642,7 @@ public class ChatAttachAlertLocationLayout extends ChatAttachAlert.AttachAlertLa
             });
         }
         locationButton.setBackgroundDrawable(drawable);
-        locationButton.setImageResource(R.drawable.location_current);
+        locationButton.setImageResource(R.drawable.msg_current_location);
         locationButton.setScaleType(ImageView.ScaleType.CENTER);
         locationButton.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_location_actionActiveIcon), PorterDuff.Mode.MULTIPLY));
         locationButton.setTag(Theme.key_location_actionActiveIcon);
@@ -1167,7 +1163,7 @@ public class ChatAttachAlertLocationLayout extends ChatAttachAlert.AttachAlertLa
                 SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                 int lastTime = preferences.getInt("backgroundloc", 0);
                 if (Math.abs(System.currentTimeMillis() / 1000 - lastTime) > 24 * 60 * 60 && activity.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    preferences.edit().putInt("backgroundloc", (int) (System.currentTimeMillis() / 1000)).commit();
+                    preferences.edit().putInt("backgroundloc", (int) (System.currentTimeMillis() / 1000)).apply();
                     AlertsCreator.createBackgroundLocationPermissionDialog(activity, getMessagesController().getUser(getUserConfig().getClientUserId()), this::openShareLiveLocation, resourcesProvider).show();
                     return;
                 }

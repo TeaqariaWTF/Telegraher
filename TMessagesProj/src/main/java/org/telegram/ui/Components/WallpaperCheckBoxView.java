@@ -12,8 +12,6 @@ import android.text.TextPaint;
 import android.util.Property;
 import android.view.View;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
 
@@ -67,7 +65,7 @@ public class WallpaperCheckBoxView extends View {
 
         textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setTextSize(AndroidUtilities.dp(14));
-        textPaint.setTypeface(ThePenisMightierThanTheSword.getFont(MessagesController.getGlobalTelegraherUICustomFont("fonts/rmedium.ttf", "rmedium")));
+        textPaint.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
 
         checkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         checkPaint.setStyle(Paint.Style.STROKE);

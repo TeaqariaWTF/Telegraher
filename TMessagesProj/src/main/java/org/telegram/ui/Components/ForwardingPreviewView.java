@@ -27,8 +27,6 @@ import androidx.recyclerview.widget.GridLayoutManagerFixed;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.evildayz.code.telegraher.ThePenisMightierThanTheSword;
-import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
@@ -591,7 +589,7 @@ public class ForwardingPreviewView extends FrameLayout {
 
         sendMessagesView = new ActionBarMenuSubItem(context, false, true, resourcesProvider);
         buttonsLayout2.addView(sendMessagesView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48));
-        sendMessagesView.setTextAndIcon(LocaleController.getString("ForwardSendMessages", R.string.ForwardSendMessages), R.drawable.msg_forward_send);
+        sendMessagesView.setTextAndIcon(LocaleController.getString("ForwardSendMessages", R.string.ForwardSendMessages), R.drawable.msg_send);
 
         if (forwardingMessagesParams.hasSenders) {
             actionItems.add(showSendersNameView);
